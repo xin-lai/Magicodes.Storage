@@ -48,6 +48,7 @@
     <Compile Include="BlobUrlAccess.cs" />
     <Compile Include="Extentions.cs" />
     <Compile Include="IStorageProvider.cs" />
+    <Compile Include="NullStorageProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StorageError.cs" />
     <Compile Include="StorageErrorCode.cs" />
