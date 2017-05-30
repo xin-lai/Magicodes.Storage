@@ -1,11 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.Storage", "Magicodes.Storage\Magicodes.Storage.csproj", "{3C02CDBB-D19E-4113-A0CA-78EA9531B506}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.Storage.Local", "Magicodes.Storage.Local\Magicodes.Storage.Local.csproj", "{65489ADE-29BF-474E-9ED7-8A4F3F2A0ED5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.Storage.Core", "Magicodes.Storage.Core\Magicodes.Storage.Core.csproj", "{51B86AF9-5029-48C8-AB53-DDA8786BD427}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.Storage.Local.Core", "Magicodes.Storage.Local.Core\Magicodes.Storage.Local.Core.csproj", "{E0455428-372A-449D-AD38-CEA289F55147}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.WeiChat.Storage.Azure.Core", "Magicodes.WeiChat.Storage.Azure.Core\Magicodes.WeiChat.Storage.Azure.Core.csproj", "{B0A6A3E9-DF72-4A3F-84C8-541C613F9D20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +27,18 @@ Global
 		{65489ADE-29BF-474E-9ED7-8A4F3F2A0ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65489ADE-29BF-474E-9ED7-8A4F3F2A0ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65489ADE-29BF-474E-9ED7-8A4F3F2A0ED5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0A6A3E9-DF72-4A3F-84C8-541C613F9D20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0A6A3E9-DF72-4A3F-84C8-541C613F9D20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0A6A3E9-DF72-4A3F-84C8-541C613F9D20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0A6A3E9-DF72-4A3F-84C8-541C613F9D20}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

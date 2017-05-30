@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <Company>湖南心莱信息科技有限公司</Company>
+    <Description>Magicodes.Storage.Core为湖南心莱信息科技有限公司封装的存储通用库，以便扩展支持本地存储、Azure存储等，支持.NET Core。\n官方网址：http://xin-lai.com \n开源库地址:https://github.com/xin-lai \n博客地址：http://www.cnblogs.com/codelove/ \n交流QQ群（Magicodes开源库交流群）：346487194 \n小店地址：https://shop113059108.taobao.com/</Description>
+    <Copyright>Copyright ©  2017</Copyright>
+    <PackageProjectUrl>https://github.com/xin-lai</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/xin-lai</RepositoryUrl>
+    <PackageId>Magicodes.Storage.Core</PackageId>
+    <PackageTags>Magicodes.Storage.Core</PackageTags>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+</Project>
