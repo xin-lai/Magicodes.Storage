@@ -9,9 +9,10 @@ using System.Threading;
 
 namespace Magicodes.Storage.Tests
 {
-    public class LocalStorageTests : TestBase
+    [Trait("Group", "本地存储测试")]
+    public class LocalStorageTests : TestBase, IDisposable
     {
-        
+
         private string rootPath;
         private string rootUrl;
 
@@ -56,6 +57,8 @@ namespace Magicodes.Storage.Tests
                await StorageProvider.DeleteContainer("AAAAAAAAAAAAA")
             );
         }
+
+        
 
         [Fact(DisplayName = "本地文件详情获取测试")]
         public async Task GetBlobFileInfo_Test()
@@ -155,6 +158,11 @@ namespace Magicodes.Storage.Tests
             await StorageProvider.SaveBlobStream(ContainerName, "1.txt", TestStream);
 
             File.Exists(Path.Combine(containerPath, "1.txt")).ShouldBe(true);
+        }
+
+        public void Dispose()
+        {
+            //TODO：数据清理
         }
     }
 }

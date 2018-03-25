@@ -12,7 +12,8 @@ using System.IO;
 
 namespace Magicodes.Storage.Tests
 {
-    public class QiNiuStorageTests : TestBase
+    [Trait("Group", "七牛云存储测试")]
+    public class QiNiuStorageTests : TestBase, IDisposable
     {
         QiNiuStorageProvider qiNiuStorageProvider;
         string localPath;
@@ -60,6 +61,10 @@ namespace Magicodes.Storage.Tests
             {
                 await StorageProvider.DeleteBlob(containerName, blobName);
             }
+        }
+
+        public void Dispose() {
+            //TODO:清理数据
         }
     }
 }

@@ -112,10 +112,12 @@ namespace Magicodes.Storage.QiNiu.Core
             BucketManager = new BucketManager(Mac, config);
         }
 
-        public Task DeleteBlob(string containerName, string blobName)
+        public async Task DeleteBlob(string containerName, string blobName)
         {
-            var result = BucketManager.Delete(containerName, blobName);
-            HandlingResult(result.Code);
+            await Task.Run(()=> {
+                var result = BucketManager.Delete(containerName, blobName);
+                HandlingResult(result.Code);
+            });
         }
         public Task DeleteContainer(string containerName) => throw new NotImplementedException();
         public Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName) => throw new NotImplementedException();
