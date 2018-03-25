@@ -10,6 +10,7 @@
 //          Blog：http://www.cnblogs.com/codelove/
 //          GitHub：https://github.com/xin-lai
 //          Home：http://xin-lai.com
+//          交流QQ群（.NET 技术交流群）：85318032
 //  
 // ======================================================================
 
@@ -18,91 +19,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Magicodes.Storage
+namespace Magicodes.Storage.Core
 {
     /// <summary>
-    /// 空存储提供程序实现，已增加程序的容错能力
+    /// 空存储提供程序实现，以增加程序的容错能力
     /// </summary>
     public class NullStorageProvider : IStorageProvider
     {
-        public void SaveBlobStream(string containerName, string blobName, Stream source,
-            BlobProperties properties = null)
-        {
-        }
-
-        public Task SaveBlobStreamAsync(string containerName, string blobName, Stream source,
-            BlobProperties properties = null)
-        {
-            return Task.FromResult(0);
-        }
-
-        public Stream GetBlobStream(string containerName, string blobName)
-        {
-            return null;
-        }
-
-        public Task<Stream> GetBlobStreamAsync(string containerName, string blobName)
-        {
-            return Task.FromResult((Stream) null);
-        }
-
-        public string GetBlobUrl(string containerName, string blobName)
-        {
-            return null;
-        }
-
-        public string GetBlobSasUrl(string containerName, string blobName, DateTimeOffset expiry,
-            bool isDownload = false,
-            string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read)
-        {
-            return null;
-        }
-
-        public BlobDescriptor GetBlobDescriptor(string containerName, string blobName)
-        {
-            return null;
-        }
-
-        public Task<BlobDescriptor> GetBlobDescriptorAsync(string containerName, string blobName)
-        {
-            return Task.FromResult((BlobDescriptor) null);
-        }
-
-        public IList<BlobDescriptor> ListBlobs(string containerName)
-        {
-            return null;
-        }
-
-        public Task<IList<BlobDescriptor>> ListBlobsAsync(string containerName)
-        {
-            return Task.FromResult((IList<BlobDescriptor>) null);
-        }
-
-        public void DeleteBlob(string containerName, string blobName)
-        {
-        }
-
-        public Task DeleteBlobAsync(string containerName, string blobName)
-        {
-            return Task.FromResult(0);
-        }
-
-        public void DeleteContainer(string containerName)
-        {
-        }
-
-        public Task DeleteContainerAsync(string containerName)
-        {
-            return Task.FromResult(0);
-        }
-
-        public void UpdateBlobProperties(string containerName, string blobName, BlobProperties properties)
-        {
-        }
-
-        public Task UpdateBlobPropertiesAsync(string containerName, string blobName, BlobProperties properties)
-        {
-            return Task.FromResult(0);
-        }
+        public Task DeleteBlob(string containerName, string blobName) => Task.FromResult(0);
+        public Task DeleteContainer(string containerName) => Task.FromResult(0);
+        public Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName) => Task.FromResult(default(BlobFileInfo));
+        public Task<Stream> GetBlobStream(string containerName, string blobName) => Task.FromResult(default(Stream));
+        public Task<string> GetBlobUrl(string containerName, string blobName) => Task.FromResult(default(string));
+        public Task<IList<BlobFileInfo>> ListBlobs(string containerName) => Task.FromResult(default(IList<BlobFileInfo>));
+        public Task SaveBlobStream(string containerName, string blobName, Stream source) => Task.FromResult(0);
     }
 }

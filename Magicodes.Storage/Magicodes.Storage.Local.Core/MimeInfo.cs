@@ -6,17 +6,18 @@
 //          filename : MimeInfo.cs
 //          description :
 //  
-//          created by 李文强 at  2016/09/23 9:45
+//          created by 李文强 at  2018/03/25 9:45
 //          Blog：http://www.cnblogs.com/codelove/
 //          GitHub ： https://github.com/xin-lai
 //          Home：http://xin-lai.com
+//          交流QQ群（.NET 技术交流群）：85318032
 //  
 // ======================================================================
 
 using System;
 using System.Collections.Generic;
 
-namespace Magicodes.Storage.Local
+namespace Magicodes.Storage.Local.Core
 {
     public static class MimeInfo
     {
@@ -593,9 +594,8 @@ namespace Magicodes.Storage.Local
             if (!extension.StartsWith("."))
                 extension = "." + extension;
 
-            string mime;
 
-            return MimeMappings.TryGetValue(extension, out mime) ? mime : "application/octet-stream";
+            return MimeMappings.TryGetValue(extension, out var mime) ? mime : "application/octet-stream";
         }
     }
 }

@@ -1,18 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <Description>Magicodes.Storage.Core为湖南心莱信息科技有限公司封装的存储通用库，以便扩展支持本地存储、Azure存储等，支持.NET Core。其中，Magicodes.Storage.Local.Core为本地存储。\n官方网址：http://xin-lai.com \n开源库地址:https://github.com/xin-lai \n博客地址：http://www.cnblogs.com/codelove/ \n交流QQ群（.NET 技术交流群）：85318032 \n小店地址：https://shop113059108.taobao.com/</Description>
     <PackageProjectUrl>https://github.com/xin-lai</PackageProjectUrl>
     <RepositoryUrl>https://github.com/xin-lai</RepositoryUrl>
-    <PackageTags>Magicodes.Storage.Local.Core</PackageTags>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <Version>2.0.0</Version>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.extensibility.execution" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <PackageReference Include="Shouldly" Version="2.8.3" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Magicodes.Storage.Core\Magicodes.Storage.Core.csproj" />
+    <ProjectReference Include="..\Magicodes.Storage.Local.Core\Magicodes.Storage.Local.Core.csproj" />
   </ItemGroup>
 </Project>

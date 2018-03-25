@@ -6,10 +6,11 @@
 //          filename : LocalStorageProvider.cs
 //          description :
 //  
-//          created by 李文强 at  2016/09/23 9:45
+//          created by 李文强 at  2018/03/25 9:45
 //          Blog：http://www.cnblogs.com/codelove/
 //          GitHub ： https://github.com/xin-lai
 //          Home：http://xin-lai.com
+//          交流QQ群（.NET 技术交流群）：85318032
 //  
 // ======================================================================
 
@@ -17,59 +18,93 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Magicodes.Storage.Core;
 
-namespace Magicodes.Storage.Local
+namespace Magicodes.Storage.Local.Core
 {
     /// <summary>
     ///     本地存储提供程序
     /// </summary>
     public class LocalStorageProvider : IStorageProvider
     {
-        private readonly string _basePath;
-        private readonly string _baseUrl;
+        private readonly string _rootPath;
+        private readonly string _rootUrl;
 
-        public LocalStorageProvider(string basePath, string baseUrl)
-        {
-            _basePath = basePath;
-            _baseUrl = baseUrl;
-        }
-
-        /// <summary>
-        ///     删除文件
-        /// </summary>
-        /// <param name="containerName"></param>
-        /// <param name="blobName"></param>
-        public void DeleteBlob(string containerName, string blobName)
+        #region 私有方法
+        private void ExceptionHandling(Action ioAction)
         {
             try
             {
-                var path = Path.Combine(_basePath, containerName, blobName);
-                File.Delete(path);
+                ioAction();
             }
             catch (UnauthorizedAccessException ex)
             {
-                throw new StorageException(1002.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.InvalidAccess.ToStorageError(), ex);
             }
             catch (ArgumentException ex)
             {
-                throw new StorageException(1004.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
             }
             catch (DirectoryNotFoundException ex)
             {
-                throw new StorageException(1005.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.InvalidContainerName.ToStorageError(), ex);
             }
             catch (NotSupportedException ex)
             {
-                throw new StorageException(1004.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
             }
             catch (IOException ex)
             {
-                throw new StorageException(1003.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.BlobInUse.ToStorageError(), ex);
             }
             catch (Exception ex)
             {
-                throw new StorageException(1001.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.GenericException.ToStorageError(), ex);
             }
+        }
+
+        private T ExceptionHandling<T>(Func<T> ioFunc)
+        {
+            try
+            {
+                return ioFunc();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new StorageException(StorageErrorCode.InvalidAccess.ToStorageError(), ex);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                throw new StorageException(StorageErrorCode.InvalidContainerName.ToStorageError(), ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
+            }
+            catch (IOException ex)
+            {
+                throw new StorageException(StorageErrorCode.BlobInUse.ToStorageError(), ex);
+            }
+            catch (Exception ex)
+            {
+                throw new StorageException(StorageErrorCode.GenericException.ToStorageError(), ex);
+            }
+        } 
+        #endregion
+
+        /// <summary>
+        /// 本地存储
+        /// </summary>
+        /// <param name="rootPath">文件根路径</param>
+        /// <param name="rootUrl">根Url</param>
+        public LocalStorageProvider(string rootPath, string rootUrl)
+        {
+            _rootPath = rootPath;
+            _rootUrl = rootUrl;
         }
 
         /// <summary>
@@ -77,263 +112,124 @@ namespace Magicodes.Storage.Local
         /// </summary>
         /// <param name="containerName"></param>
         /// <param name="blobName"></param>
-        /// <returns></returns>
-        public Task DeleteBlobAsync(string containerName, string blobName)
+        public async Task DeleteBlob(string containerName, string blobName)
         {
-            return Task.Factory.StartNew(() => DeleteBlob(containerName, blobName));
-        }
-
-        /// <summary>
-        ///     删除容器
-        /// </summary>
-        /// <param name="containerName">容器名称</param>
-        public void DeleteContainer(string containerName)
-        {
-            try
+            await Task.Run(() =>
             {
-                var path = Path.Combine(_basePath, containerName);
-                Directory.Delete(path, true);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                throw new StorageException(1002.ToStorageError(), ex);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new StorageException(1005.ToStorageError(), ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new StorageException(1005.ToStorageError(), ex);
-            }
-            catch (IOException ex)
-            {
-                throw new StorageException(1003.ToStorageError(), ex);
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
-        }
-
-        /// <summary>
-        ///     删除容器
-        /// </summary>
-        /// <param name="containerName">容器名称</param>
-        /// <returns></returns>
-        public Task DeleteContainerAsync(string containerName)
-        {
-            return Task.Run(() => DeleteContainer(containerName));
-        }
-
-        public BlobDescriptor GetBlobDescriptor(string containerName, string blobName)
-        {
-            var path = Path.Combine(_basePath, containerName, blobName);
-
-            try
-            {
-                var info = new FileInfo(path);
-
-                return new BlobDescriptor
+                ExceptionHandling(() =>
                 {
-                    Container = containerName,
-                    ContentMD5 = "",
-                    ContentType = info.Extension.GetMimeType(),
-                    ETag = "",
-                    LastModified = info.LastWriteTimeUtc,
-                    Length = info.Length,
-                    Name = info.Name,
-                    Security = BlobSecurity.Private,
-                    Url = info.FullName
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
+                    var path = Path.Combine(_rootPath, containerName, blobName);
+                    File.Delete(path);
+                });
+            });
         }
 
-        public Task<BlobDescriptor> GetBlobDescriptorAsync(string containerName, string blobName)
+
+        /// <summary>
+        ///     删除容器
+        /// </summary>
+        /// <param name="containerName">容器名称</param>
+        public async Task DeleteContainer(string containerName)
         {
-            return Task.Run((Action) (() => GetBlobDescriptor(containerName, blobName))) as Task<BlobDescriptor>;
+            await Task.Run(() =>
+            {
+                ExceptionHandling(() =>
+                {
+                    var path = Path.Combine(_rootPath, containerName);
+                    Directory.Delete(path, true);
+                });
+            });
         }
 
-        public string GetBlobSasUrl(string containerName, string blobName, DateTimeOffset expiry,
-            bool isDownload = false, string fileName = null, string contentType = null,
-            BlobUrlAccess access = BlobUrlAccess.Read)
+
+        public async Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName)
         {
-            return Path.Combine(_basePath, containerName, blobName);
+            return await Task.Run(() => ExceptionHandling(() =>
+             {
+                 var path = Path.Combine(_rootPath, containerName, blobName);
+                 var info = new FileInfo(path);
+
+                 return new BlobFileInfo
+                 {
+                     Container = containerName,
+                     ContentMD5 = "",
+                     ContentType = info.Extension.GetMimeType(),
+                     ETag = "",
+                     LastModified = info.LastWriteTimeUtc,
+                     Length = info.Length,
+                     Name = info.Name,
+                     Url = info.FullName
+                 };
+             }));
         }
 
-        public Stream GetBlobStream(string containerName, string blobName)
+
+        public Task<string> GetBlobSasUrl(string containerName, string blobName)
         {
-            try
-            {
-                var path = Path.Combine(_basePath, containerName, blobName);
-                return File.OpenRead(path);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                throw new StorageException(1002.ToStorageError(), ex);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new StorageException(1005.ToStorageError(), ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (FileNotFoundException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (IOException ex)
-            {
-                throw new StorageException(1006.ToStorageError(), ex);
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
+            return Task.FromResult(Path.Combine(_rootPath, containerName, blobName));
         }
 
-        public async Task<Stream> GetBlobStreamAsync(string containerName, string blobName)
+        public async Task<Stream> GetBlobStream(string containerName, string blobName)
         {
-            return await Task.Run(() => GetBlobStream(containerName, blobName));
-        }
-
-        public string GetBlobUrl(string containerName, string blobName)
-        {
-            return string.Format("{0}/{1}/{2}", _baseUrl, containerName, blobName);
-        }
-
-        public IList<BlobDescriptor> ListBlobs(string containerName)
-        {
-            var localFilesInfo = new List<BlobDescriptor>();
-
-            try
+            return await Task.Run(() =>
             {
-                var dir = Path.Combine(_basePath, containerName);
-                var dirInfo = new DirectoryInfo(dir);
-                var fileInfo = dirInfo.GetFiles();
+                return ExceptionHandling(() =>
+                {
+                    var path = Path.Combine(_rootPath, containerName, blobName);
+                    return (Stream)File.OpenRead(path);
+                });
+            });
+        }
 
-                foreach (var f in fileInfo)
-                    localFilesInfo.Add(new BlobDescriptor
+
+        public Task<string> GetBlobUrl(string containerName, string blobName)
+        {
+            return Task.FromResult(string.Format("{0}/{1}/{2}", _rootUrl, containerName, blobName));
+        }
+
+        public async Task<IList<BlobFileInfo>> ListBlobs(string containerName)
+        {
+            return await Task.Run(() =>
+            {
+                return ExceptionHandling(() =>
+                {
+                    var localFilesInfo = new List<BlobFileInfo>();
+                    var dir = Path.Combine(_rootPath, containerName);
+                    var dirInfo = new DirectoryInfo(dir);
+                    var fileInfo = dirInfo.GetFiles();
+
+                    foreach (var f in fileInfo)
+                        localFilesInfo.Add(new BlobFileInfo
+                        {
+                            ContentMD5 = "",
+                            ETag = "",
+                            ContentType = f.Extension.GetMimeType(),
+                            Container = containerName,
+                            LastModified = f.LastWriteTime,
+                            Length = f.Length,
+                            Name = f.Name,
+                            Url = f.FullName,
+                        });
+
+                    return localFilesInfo;
+                });
+            });
+        }
+
+        public async Task SaveBlobStream(string containerName, string blobName, Stream source)
+        {
+            await Task.Run(() =>
+            {
+                ExceptionHandling(() =>
+                {
+                    var dir = Path.Combine(_rootPath, containerName);
+                    Directory.CreateDirectory(dir);
+                    using (var file = File.Create(Path.Combine(dir, blobName)))
                     {
-                        ContentMD5 = "",
-                        ETag = "",
-                        ContentType = f.Extension.GetMimeType(),
-                        Container = containerName,
-                        LastModified = f.LastWriteTime,
-                        Length = f.Length,
-                        Name = f.Name,
-                        Url = f.FullName,
-                        Security = BlobSecurity.Private
-                    });
-
-                return localFilesInfo;
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
-        }
-
-        public Task<IList<BlobDescriptor>> ListBlobsAsync(string containerName)
-        {
-            return Task.Run((Action) (() => ListBlobs(containerName))) as Task<IList<BlobDescriptor>>;
-        }
-
-        public void SaveBlobStream(string containerName, string blobName, Stream source,
-            BlobProperties properties = null)
-        {
-            var dir = Path.Combine(_basePath, containerName);
-
-            try
-            {
-                Directory.CreateDirectory(dir);
-                using (var file = File.Create(Path.Combine(dir, blobName)))
-                {
-                    source.CopyTo(file);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                throw new StorageException(1002.ToStorageError(), ex);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new StorageException(1005.ToStorageError(), ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (IOException ex)
-            {
-                throw new StorageException(1006.ToStorageError(), ex);
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
-        }
-
-        public async Task SaveBlobStreamAsync(string containerName, string blobName, Stream source,
-            BlobProperties properties = null)
-        {
-            var dir = Path.Combine(_basePath, containerName);
-
-            try
-            {
-                Directory.CreateDirectory(dir);
-                using (var file = File.Create(Path.Combine(dir, blobName)))
-                {
-                    await source.CopyToAsync(file);
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                throw new StorageException(1002.ToStorageError(), ex);
-            }
-            catch (ArgumentException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new StorageException(1005.ToStorageError(), ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                throw new StorageException(1004.ToStorageError(), ex);
-            }
-            catch (IOException ex)
-            {
-                throw new StorageException(1006.ToStorageError(), ex);
-            }
-            catch (Exception ex)
-            {
-                throw new StorageException(1001.ToStorageError(), ex);
-            }
-        }
-
-        public void UpdateBlobProperties(string containerName, string blobName, BlobProperties properties)
-        {
-        }
-
-        public Task UpdateBlobPropertiesAsync(string containerName, string blobName, BlobProperties properties)
-        {
-            return Task.FromResult(0);
+                        source.CopyTo(file);
+                    }
+                });
+            });
         }
     }
 }
