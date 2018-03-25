@@ -30,6 +30,11 @@ namespace Magicodes.Storage.Local.Core
         private readonly string _rootPath;
         private readonly string _rootUrl;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ProviderName => "Local";
+
         #region 私有方法
         private void ExceptionHandling(Action ioAction)
         {

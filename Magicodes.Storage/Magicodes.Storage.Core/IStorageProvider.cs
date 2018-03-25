@@ -27,6 +27,11 @@ namespace Magicodes.Storage.Core
     public interface IStorageProvider
     {
         /// <summary>
+        /// 提供程序名称
+        /// </summary>
+        string ProviderName { get; }
+
+        /// <summary>
         /// 保存对象到指定的容器
         /// </summary>
         /// <param name="containerName"></param>
