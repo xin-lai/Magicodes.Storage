@@ -75,6 +75,18 @@ namespace Magicodes.Storage.Core
         /// 凭据或证书错误
         /// </summary>
         [Display(Name = "凭据或证书错误")]
-        NoCredentialsProvided = 1007
+        NoCredentialsProvided = 1007,
+
+        /// <summary>
+        /// 没有找到该文件
+        /// </summary>
+        [Display(Name = "没有找到该文件")]
+        FileNotFound = 1008,
+
+        /// <summary>
+        /// 没有找到该目录
+        /// </summary>
+        [Display(Name = "没有找到该容器")]
+        ContainerNotFound = 1009
     }
 }

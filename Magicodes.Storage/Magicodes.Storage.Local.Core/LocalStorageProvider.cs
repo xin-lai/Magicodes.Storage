@@ -47,11 +47,15 @@ namespace Magicodes.Storage.Local.Core
             }
             catch (DirectoryNotFoundException ex)
             {
-                throw new StorageException(StorageErrorCode.InvalidContainerName.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.ContainerNotFound.ToStorageError(), ex);
             }
             catch (NotSupportedException ex)
             {
                 throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
+            }
+            catch (FileNotFoundException ex)
+            {
+                throw new StorageException(StorageErrorCode.FileNotFound.ToStorageError(), ex);
             }
             catch (IOException ex)
             {
@@ -79,11 +83,15 @@ namespace Magicodes.Storage.Local.Core
             }
             catch (DirectoryNotFoundException ex)
             {
-                throw new StorageException(StorageErrorCode.InvalidContainerName.ToStorageError(), ex);
+                throw new StorageException(StorageErrorCode.ContainerNotFound.ToStorageError(), ex);
             }
             catch (NotSupportedException ex)
             {
                 throw new StorageException(StorageErrorCode.InvalidBlobName.ToStorageError(), ex);
+            }
+            catch (FileNotFoundException ex)
+            {
+                throw new StorageException(StorageErrorCode.FileNotFound.ToStorageError(), ex);
             }
             catch (IOException ex)
             {
@@ -93,7 +101,7 @@ namespace Magicodes.Storage.Local.Core
             {
                 throw new StorageException(StorageErrorCode.GenericException.ToStorageError(), ex);
             }
-        } 
+        }
         #endregion
 
         /// <summary>
@@ -142,6 +150,12 @@ namespace Magicodes.Storage.Local.Core
         }
 
 
+        /// <summary>
+        /// 获取文件信息
+        /// </summary>
+        /// <param name="containerName"></param>
+        /// <param name="blobName"></param>
+        /// <returns></returns>
         public async Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName)
         {
             return await Task.Run(() => ExceptionHandling(() =>
@@ -163,12 +177,6 @@ namespace Magicodes.Storage.Local.Core
              }));
         }
 
-
-        public Task<string> GetBlobSasUrl(string containerName, string blobName)
-        {
-            return Task.FromResult(Path.Combine(_rootPath, containerName, blobName));
-        }
-
         public async Task<Stream> GetBlobStream(string containerName, string blobName)
         {
             return await Task.Run(() =>
@@ -184,6 +192,16 @@ namespace Magicodes.Storage.Local.Core
 
         public Task<string> GetBlobUrl(string containerName, string blobName)
         {
+            var path = Path.Combine(_rootPath, containerName, blobName);
+            if (!Directory.Exists(Path.Combine(_rootPath, containerName)))
+            {
+                throw new StorageException(StorageErrorCode.ContainerNotFound.ToStorageError(), null);
+            }
+
+            if (!File.Exists(path))
+            {
+                throw new StorageException(StorageErrorCode.FileNotFound.ToStorageError(), null);
+            }
             return Task.FromResult(string.Format("{0}/{1}/{2}", _rootUrl, containerName, blobName));
         }
 
@@ -231,5 +249,7 @@ namespace Magicodes.Storage.Local.Core
                 });
             });
         }
+
+        public Task<string> GetBlobUrl(string containerName, string blobName, DateTime expiry, bool isDownload = false, string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read) => throw new NotSupportedException();
     }
 }
