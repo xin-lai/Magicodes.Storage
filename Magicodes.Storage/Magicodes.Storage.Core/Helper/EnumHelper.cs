@@ -7,7 +7,7 @@ using System.Text;
 namespace Magicodes.Storage.Core.Helper
 {
     /// <summary>
-    /// 
+    /// 枚举帮助类
     /// </summary>
     public static class EnumHelper
     {

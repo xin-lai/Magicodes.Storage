@@ -17,5 +17,6 @@
     <ProjectReference Include="..\Magicodes.Storage.Core\Magicodes.Storage.Core.csproj" />
     <ProjectReference Include="..\Magicodes.Storage.Local.Core\Magicodes.Storage.Local.Core.csproj" />
     <ProjectReference Include="..\Magicodes.Storage.QiNiu.Core\Magicodes.Storage.QiNiu.Core.csproj" />
+    <ProjectReference Include="..\Magicodes.Storage.Tencent.Core\Magicodes.Storage.Tencent.Core.csproj" />
   </ItemGroup>
 </Project>
