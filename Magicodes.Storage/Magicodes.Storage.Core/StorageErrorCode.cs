@@ -109,9 +109,9 @@ namespace Magicodes.Storage.Core
         PostError = 1012,
 
         /// <summary>
-        /// 请求资源大小大于指定的最大值
+        /// 请求资源大小不符合要求
         /// </summary>
-        [Display(Name = "请求资源大小大于指定的最大值")]
+        [Display(Name = "请求资源大小不符合要求")]
         SizeError = 1013,
 
         /// <summary>
