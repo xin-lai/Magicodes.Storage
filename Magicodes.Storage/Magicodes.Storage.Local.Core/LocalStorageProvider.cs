@@ -14,28 +14,44 @@
 //  
 // ======================================================================
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Magicodes.Storage.Core;
-
 namespace Magicodes.Storage.Local.Core
 {
+    using Magicodes.Storage.Core;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Threading.Tasks;
+
     /// <summary>
-    ///     本地存储提供程序
+    /// 本地存储提供程序
     /// </summary>
     public class LocalStorageProvider : IStorageProvider
     {
+        /// <summary>
+        /// Defines the _rootPath
+        /// </summary>
         private readonly string _rootPath;
+
+        /// <summary>
+        /// Defines the _rootUrl
+        /// </summary>
         private readonly string _rootUrl;
 
         /// <summary>
-        /// 
+        /// Gets the ProviderName
         /// </summary>
         public string ProviderName => "Local";
 
-        #region 私有方法
+        /// <summary>
+        /// Gets or sets the AllowExtensionList
+        /// 允许的扩展列表
+        /// </summary>
+        public IList<string> AllowExtensionList { get; set; }
+
+        /// <summary>
+        /// The ExceptionHandling
+        /// </summary>
+        /// <param name="ioAction">The ioAction<see cref="Action"/></param>
         private void ExceptionHandling(Action ioAction)
         {
             try
@@ -72,6 +88,12 @@ namespace Magicodes.Storage.Local.Core
             }
         }
 
+        /// <summary>
+        /// The ExceptionHandling
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ioFunc">The ioFunc<see cref="Func{T}"/></param>
+        /// <returns>The <see cref="T"/></returns>
         private T ExceptionHandling<T>(Func<T> ioFunc)
         {
             try
@@ -107,10 +129,9 @@ namespace Magicodes.Storage.Local.Core
                 throw new StorageException(StorageErrorCode.GenericException.ToStorageError(), ex);
             }
         }
-        #endregion
 
         /// <summary>
-        /// 本地存储
+        /// Initializes a new instance of the <see cref="LocalStorageProvider"/> class.
         /// </summary>
         /// <param name="rootPath">文件根路径</param>
         /// <param name="rootUrl">根Url</param>
@@ -121,10 +142,11 @@ namespace Magicodes.Storage.Local.Core
         }
 
         /// <summary>
-        ///     删除文件
+        /// 删除文件
         /// </summary>
         /// <param name="containerName"></param>
         /// <param name="blobName"></param>
+        /// <returns>The <see cref="Task"/></returns>
         public async Task DeleteBlob(string containerName, string blobName)
         {
             await Task.Run(() =>
@@ -137,11 +159,11 @@ namespace Magicodes.Storage.Local.Core
             });
         }
 
-
         /// <summary>
-        ///     删除容器
+        /// 删除容器
         /// </summary>
         /// <param name="containerName">容器名称</param>
+        /// <returns>The <see cref="Task"/></returns>
         public async Task DeleteContainer(string containerName)
         {
             await Task.Run(() =>
@@ -153,7 +175,6 @@ namespace Magicodes.Storage.Local.Core
                 });
             });
         }
-
 
         /// <summary>
         /// 获取文件信息
@@ -182,6 +203,12 @@ namespace Magicodes.Storage.Local.Core
              }));
         }
 
+        /// <summary>
+        /// The GetBlobStream
+        /// </summary>
+        /// <param name="containerName">The containerName<see cref="string"/></param>
+        /// <param name="blobName">The blobName<see cref="string"/></param>
+        /// <returns>The <see cref="Task{Stream}"/></returns>
         public async Task<Stream> GetBlobStream(string containerName, string blobName)
         {
             return await Task.Run(() =>
@@ -194,7 +221,12 @@ namespace Magicodes.Storage.Local.Core
             });
         }
 
-
+        /// <summary>
+        /// The GetBlobUrl
+        /// </summary>
+        /// <param name="containerName">The containerName<see cref="string"/></param>
+        /// <param name="blobName">The blobName<see cref="string"/></param>
+        /// <returns>The <see cref="Task{string}"/></returns>
         public Task<string> GetBlobUrl(string containerName, string blobName)
         {
             var path = Path.Combine(_rootPath, containerName, blobName);
@@ -210,6 +242,11 @@ namespace Magicodes.Storage.Local.Core
             return Task.FromResult(string.Format("{0}/{1}/{2}", _rootUrl, containerName, blobName));
         }
 
+        /// <summary>
+        /// The ListBlobs
+        /// </summary>
+        /// <param name="containerName">The containerName<see cref="string"/></param>
+        /// <returns>The <see cref="Task{IList{BlobFileInfo}}"/></returns>
         public async Task<IList<BlobFileInfo>> ListBlobs(string containerName)
         {
             return await Task.Run(() =>
@@ -239,6 +276,13 @@ namespace Magicodes.Storage.Local.Core
             });
         }
 
+        /// <summary>
+        /// The SaveBlobStream
+        /// </summary>
+        /// <param name="containerName">The containerName<see cref="string"/></param>
+        /// <param name="blobName">The blobName<see cref="string"/></param>
+        /// <param name="source">The source<see cref="Stream"/></param>
+        /// <returns>The <see cref="Task"/></returns>
         public async Task SaveBlobStream(string containerName, string blobName, Stream source)
         {
             await Task.Run(() =>
@@ -249,12 +293,27 @@ namespace Magicodes.Storage.Local.Core
                     Directory.CreateDirectory(dir);
                     using (var file = File.Create(Path.Combine(dir, blobName)))
                     {
+                        if (AllowExtensionList != null && AllowExtensionList.Contains((Path.GetExtension(blobName) ?? "".ToLower())))
+                        {
+                            throw new StorageException(StorageErrorCode.UnsupportedFileType.ToStorageError(), new Exception("不支持 " + Path.GetExtension(blobName) + " 类型的文件上传，请查看允许的扩展名设置！"));
+                        }
                         source.CopyTo(file);
                     }
                 });
             });
         }
 
+        /// <summary>
+        /// The GetBlobUrl
+        /// </summary>
+        /// <param name="containerName">The containerName<see cref="string"/></param>
+        /// <param name="blobName">The blobName<see cref="string"/></param>
+        /// <param name="expiry">The expiry<see cref="DateTime"/></param>
+        /// <param name="isDownload">The isDownload<see cref="bool"/></param>
+        /// <param name="fileName">The fileName<see cref="string"/></param>
+        /// <param name="contentType">The contentType<see cref="string"/></param>
+        /// <param name="access">The access<see cref="BlobUrlAccess"/></param>
+        /// <returns>The <see cref="Task{string}"/></returns>
         public Task<string> GetBlobUrl(string containerName, string blobName, DateTime expiry, bool isDownload = false, string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read) => throw new NotSupportedException();
     }
 }

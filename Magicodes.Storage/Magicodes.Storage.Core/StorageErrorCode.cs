@@ -143,5 +143,11 @@ namespace Magicodes.Storage.Core
         /// </summary>
         [Display(Name = "数量达到上限")]
         CountLimitError = 1018,
+
+        /// <summary>
+        /// 不支持的文件类型
+        /// </summary>
+        [Display(Name = "不支持的文件类型")]
+        UnsupportedFileType = 1019,
     }
 }
