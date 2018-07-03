@@ -198,8 +198,8 @@ namespace Magicodes.Storage.Local.Core
                      LastModified = info.LastWriteTimeUtc,
                      Length = info.Length,
                      Name = info.Name,
-                     Url = info.FullName
-                 };
+                     Url = GetUrl(containerName, blobName)
+             };
              }));
         }
 
@@ -239,9 +239,11 @@ namespace Magicodes.Storage.Local.Core
             {
                 throw new StorageException(StorageErrorCode.FileNotFound.ToStorageError(), null);
             }
-            return Task.FromResult(string.Format("{0}/{1}/{2}", _rootUrl, containerName, blobName));
+            var url = GetUrl(containerName, blobName);
+            return Task.FromResult(url);
         }
 
+        private string GetUrl(string containerName, string blobName) => string.Format("{0}/{1}/{2}", _rootUrl.TrimEnd('/'), containerName, blobName);
         /// <summary>
         /// The ListBlobs
         /// </summary>
