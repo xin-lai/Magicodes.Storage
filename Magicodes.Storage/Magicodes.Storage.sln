@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.QiNiu.Core", "Magicodes.Storage.QiNiu.Core\Magicodes.Storage.QiNiu.Core.csproj", "{1FA5BC70-ADB7-401C-AD2A-62859B7A6EFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magicodes.Storage.Tencent.Core", "Magicodes.Storage.Tencent.Core\Magicodes.Storage.Tencent.Core.csproj", "{AA762A03-98CE-40B4-803F-5D66E0C89327}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Tencent.Core", "Magicodes.Storage.Tencent.Core\Magicodes.Storage.Tencent.Core.csproj", "{AA762A03-98CE-40B4-803F-5D66E0C89327}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.AliyunOss.Core", "Magicodes.Storage.Oss\Magicodes.Storage.AliyunOss.Core.csproj", "{5C3E266B-A4E5-4ADB-94CD-2C58D0CE2A55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C3E266B-A4E5-4ADB-94CD-2C58D0CE2A55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C3E266B-A4E5-4ADB-94CD-2C58D0CE2A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C3E266B-A4E5-4ADB-94CD-2C58D0CE2A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C3E266B-A4E5-4ADB-94CD-2C58D0CE2A55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
