@@ -6,46 +6,81 @@ using Magicodes.Storage.Tencent.Core;
 using System.IO;
 using System.Threading.Tasks;
 using Magicodes.Storage.Core;
+using Shouldly;
+
 
 namespace Magicodes.Storage.Tests
 {
+
     [Trait("Group", "腾讯云存储测试")]
     public class TencentStorageTests : TestBase, IDisposable
     {
-        TencentStorageProvider TencentStorage; 
+        private string rootPath;
+        TencentStorageProvider TencentStorage;
         public TencentStorageTests()
         {
-            //七牛云注册即有免费空间,请替换为自己的
-            //qiNiuStorageProvider = new QiNiuStorageProvider("33Ag3A3lSRrZ3VHyaCravN61g5DWhz6C24I5Zp_r", "qbepDnLi6Y4b4DH9XchxP-qTKddZeA5iLyZitE-U");
+
             TencentCosConfig cosConfig = new TencentCosConfig()
             {
                 //这里使用自己的腾讯云相关配置
-                AppId = "",
-                SecretId = "",
-                SecretKey = ""
+                AppId = "1256819585",
+                SecretId = "AKIDVoumQq0ziDVZP0qTKwJTQ7lCPO9hf7ya",
+                SecretKey = "WnoZ4KK5appZ4JJciZDdomZ9VcVAbnlX",
             };
-            Bucket bucket = new Bucket(cosConfig.AppId, "t1", "ap-chengdu");
+
+            Bucket bucket = new Bucket(cosConfig.AppId, "mtest-1256819585", "ap-chengdu");
             TencentStorage = new TencentStorageProvider(cosConfig, bucket);
             StorageProvider = TencentStorage;
         }
 
-        [Fact(DisplayName = "腾讯云_目录删除测试")]
+        [Fact(DisplayName = "腾讯云_删除容器")]
         public async Task DeleteContainer_Test()
         {
-            await StorageProvider.DeleteContainer("t1");
+            await StorageProvider.DeleteContainer("SaveBlob");
         }
-
-        [Fact(DisplayName = "腾讯云_获取对象属性信息")]
+        [Fact(DisplayName = "腾讯云_删除对象")]
+        public async Task DeleteBlob_Test()
+        {
+            await StorageProvider.SaveBlobStream("SaveBlob", "1.docx", TestStream);
+            await StorageProvider.DeleteBlob("SaveBlob", "1.docx");
+        }
+        [Fact(DisplayName = "腾讯云_获取文件信息")]
         public async Task GetBlobFileInfo_Test()
         {
-            await StorageProvider.GetBlobFileInfo("", "JSON解析工具.rar");
+            await StorageProvider.GetBlobFileInfo("SaveBlob", "1.txt");
         }
 
         [Fact(DisplayName = "腾讯云_本地文件上传测试")]
         public async Task SaveBlobStream_Test()
-        {         
-            await StorageProvider.SaveBlobStream("", "1.txt", TestStream);
+        {
+            await StorageProvider.SaveBlobStream("SaveBlob", "1.txt", TestStream);
 
+        }
+        [Fact(DisplayName = "腾讯云_列出指定容器下的对象列表")]
+        public async Task ListBlobs_Test()
+        {
+            var result = await StorageProvider.ListBlobs("SaveBlob/");
+            result.ShouldNotBeNull();
+            result.Count.ShouldBeGreaterThan(0);
+
+        }
+        [Fact(DisplayName = "腾讯云_获取授权访问链接")]
+        public async Task GetBlobUrl_Test()
+        {
+            var result = await StorageProvider.GetBlobUrl("SaveBlob", "1.txt", DateTime.Now);
+            result.ShouldNotBeNull();
+        }
+        [Fact(DisplayName = "腾讯云_获取访问链接(两个参数)")]
+        public async Task GetBlobUrl1_Test()
+        {
+            var result = await StorageProvider.GetBlobUrl("SaveBlob", "1.txt");
+            result.ShouldNotBeNull();
+        }
+
+        [Fact(DisplayName = "获取文件的流信息")]
+        public async Task GetBlobStream_Test()
+        {
+            await StorageProvider.GetBlobStream("SaveBlob", "1.txt");
         }
 
         public void Dispose()

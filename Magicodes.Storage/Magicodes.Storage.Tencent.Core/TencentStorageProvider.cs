@@ -4,6 +4,12 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Magicodes.Storage.Core;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Transfer;
+using System.Linq;
+using Amazon.Runtime;
 /// <summary>
 /// 腾讯云存储实现
 /// </summary>
@@ -14,13 +20,14 @@ namespace Magicodes.Storage.Tencent.Core
     /// </summary>
     public class TencentStorageProvider : IStorageProvider
     {
-        /// <summary>
         /// 提供服务名称
         /// </summary>
         public string ProviderName => "TencentCOS";
         private readonly TencentCosService TencentCos;
         private readonly Bucket StorageBucket;
-
+        private readonly BlobFileInfo BlobFileInfo;
+        private readonly string _serverPath;
+        private readonly AmazonS3Client amazonS3Client;
         /// <summary>
         /// 腾讯云存储对象提供构造函数
         /// </summary>
@@ -29,8 +36,18 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="backChannel"></param>
         public TencentStorageProvider(TencentCosConfig cfg, Bucket bucket)
         {
-            TencentCos = new TencentCosService(cfg, bucket);
             StorageBucket = bucket;
+            AmazonS3Config config = new AmazonS3Config
+            {
+                //注意要将<region>替换为相对应的region，如ap-beijing，ap-guangzhou...
+                //ServiceURL = $"http://{bucket.Name}.cos.{bucket.Region}.myqcloud.com",
+                ServiceURL = $"http://cos.{bucket.Region}.myqcloud.com",
+            };
+            amazonS3Client = new AmazonS3Client(
+                    cfg.SecretId,
+                    cfg.SecretKey,
+                    config
+                    );
         }
 
 
@@ -41,7 +58,14 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="blobName">文件名称</param>
         public async Task DeleteBlob(string containerName, string blobName)
         {
-            await TencentCos.DeleteObjectAsync(StorageBucket, blobName);
+            // throw new NotImplementedException();
+            DeleteObjectRequest request = new DeleteObjectRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}"
+            };
+            DeleteObjectResponse response = await amazonS3Client.DeleteObjectAsync(request);
+            CheckResult(response);
         }
 
         /// <summary>
@@ -51,9 +75,12 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task DeleteContainer(string containerName)
         {
-            //只有容器存在才执行删除
-            if (await TencentCos.BucketExists())
-                await TencentCos.DeleteBucketAsync();
+
+            DeleteBucketRequest request = new DeleteBucketRequest
+            {
+                BucketName = StorageBucket.Name,
+            };
+            var response = await amazonS3Client.DeleteBucketAsync(request);
         }
         /// <summary>
         /// 获取文件信息
@@ -63,7 +90,25 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName)
         {
-            return await TencentCos.GetBlobFileInfo(blobName);
+            GetObjectRequest request = new GetObjectRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}"
+            };
+            GetObjectResponse response = await amazonS3Client.GetObjectAsync(request);
+            CheckResult(response);
+            return new BlobFileInfo()
+            {
+                Container = containerName,
+                //ContentMD5 = response.
+                //ContentType = response.
+                ETag = response.ETag,
+                Length = response.ContentLength,
+                LastModified = response.LastModified,
+                Name = blobName,
+                //Url = response.u
+            };
+
         }
 
         /// <summary>
@@ -74,7 +119,15 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task<Stream> GetBlobStream(string containerName, string blobName)
         {
-            return await TencentCos.GetObjectAsync(blobName);
+            var request = new GetObjectRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}"
+            };
+            GetObjectResponse response = await amazonS3Client.GetObjectAsync(request);
+            CheckResult(response);
+            return response.ResponseStream;
+
         }
 
         /// <summary>
@@ -88,14 +141,31 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="contentType">内容类型</param>
         /// <param name="access">访问限制</param>
         /// <returns></returns>
+        #region      url
         public Task<string> GetBlobUrl(string containerName, string blobName)
         {
-            return Task.FromResult(StorageBucket.Url + $"/{blobName}");
-        }
 
+            GetPreSignedUrlRequest request = new GetPreSignedUrlRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}"
+            };
+            string url = amazonS3Client.GetPreSignedURL(request);
+            return Task.FromResult(url);
+        }
+        #endregion
         public Task<string> GetBlobUrl(string containerName, string blobName, DateTime expiry, bool isDownload = false, string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read)
         {
-            return Task.FromResult(StorageBucket.Url + $"/{blobName}");
+            GetPreSignedUrlRequest request = new GetPreSignedUrlRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}",
+                Expires = expiry,
+                ContentType = contentType
+            };
+
+            string url = amazonS3Client.GetPreSignedURL(request);
+            return Task.FromResult(url);
         }
 
         /// <summary>
@@ -103,9 +173,29 @@ namespace Magicodes.Storage.Tencent.Core
         /// </summary>
         /// <param name="containerName"></param>
         /// <returns></returns>
-        public Task<IList<BlobFileInfo>> ListBlobs(string containerName)
+        public async Task<IList<BlobFileInfo>> ListBlobs(string containerName)
         {
-            throw new NotImplementedException();
+            if (!string.IsNullOrWhiteSpace(containerName) && !containerName.EndsWith("/"))
+            {
+                containerName += "/";
+            }
+            var req = new ListObjectsV2Request
+            {
+                BucketName = StorageBucket.Name,
+                Prefix = containerName
+            };
+            var resp = await amazonS3Client.ListObjectsV2Async(req);
+            CheckResult(resp);
+            var list = resp.S3Objects
+                .Select(obj =>
+                     new BlobFileInfo
+                     {
+                         Container = obj.BucketName,
+                         ETag = obj.ETag,
+                         Length = obj.Size,
+                         LastModified = obj.LastModified
+                     });
+            return list.ToArray();
         }
 
         /// <summary>
@@ -116,7 +206,30 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="source"></param>
         public async Task SaveBlobStream(string containerName, string blobName, Stream source)
         {
-            await TencentCos.PutObjectAsync(blobName, source);
+            PutObjectRequest request = new PutObjectRequest
+            {
+                BucketName = StorageBucket.Name,
+                Key = $"{containerName}/{blobName}",
+                InputStream = source,
+            };
+            var response = await amazonS3Client.PutObjectAsync(request);
+            CheckResult(response);
+        }
+
+        /// <summary>
+        /// 判断是否通过
+        /// </summary>
+        /// <param name="response"></param>
+        private static void CheckResult(AmazonWebServiceResponse response)
+        {
+            if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            {
+                throw new StorageException(new StorageError()
+                {
+                    Code = Convert.ToInt32(response.HttpStatusCode),
+                    Message = null
+                }, null);
+            }
         }
     }
 }
