@@ -75,11 +75,11 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task DeleteContainer(string containerName)
         {
-            if (!string.IsNullOrEmpty(containerName))
+            if (containerName.EndsWith("/"))
             {
-                throw new Exception("对象不为空，不允许删除！");
-            };
-
+                throw new Exception("对象不为空，不允许删除!");
+            }
+           
             DeleteBucketRequest request = new DeleteBucketRequest
             {
 
@@ -87,11 +87,12 @@ namespace Magicodes.Storage.Tencent.Core
                 //BucketName = $"{containerName}"
             };
             var response = await amazonS3Client.DeleteBucketAsync(request);
+
         }
         /// <summary>
         /// 获取文件信息
         /// </summary>
-        /// <param name="containerName"></param>
+        /// <param name="containerName"></param>    
         /// <param name="blobName"></param>
         /// <returns></returns>
         public async Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName)
