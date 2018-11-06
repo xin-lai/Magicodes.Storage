@@ -12,21 +12,18 @@ namespace Magicodes.Storage.Tests
     [Trait("Group", "腾讯云存储测试")]
     public class TencentStorageTests : TestBase, IDisposable
     {
-        TencentStorageProvider TencentStorage; 
         public TencentStorageTests()
         {
-            //七牛云注册即有免费空间,请替换为自己的
-            //qiNiuStorageProvider = new QiNiuStorageProvider("33Ag3A3lSRrZ3VHyaCravN61g5DWhz6C24I5Zp_r", "qbepDnLi6Y4b4DH9XchxP-qTKddZeA5iLyZitE-U");
-            TencentCosConfig cosConfig = new TencentCosConfig()
+            var cosConfig = new TencentCosConfig()
             {
                 //这里使用自己的腾讯云相关配置
                 AppId = "",
                 SecretId = "",
                 SecretKey = ""
             };
-            Bucket bucket = new Bucket(cosConfig.AppId, "t1", "ap-chengdu");
-            TencentStorage = new TencentStorageProvider(cosConfig, bucket);
-            StorageProvider = TencentStorage;
+            var bucket = new Bucket(cosConfig.AppId, "t1", "ap-chengdu");
+            var tencentStorage = new TencentStorageProvider(cosConfig, bucket);
+            StorageProvider = tencentStorage;
         }
 
         [Fact(DisplayName = "腾讯云_目录删除测试")]

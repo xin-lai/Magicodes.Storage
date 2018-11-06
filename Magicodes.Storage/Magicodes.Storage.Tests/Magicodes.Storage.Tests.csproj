@@ -20,4 +20,9 @@
     <ProjectReference Include="..\Magicodes.Storage.QiNiu.Core\Magicodes.Storage.QiNiu.Core.csproj" />
     <ProjectReference Include="..\Magicodes.Storage.Tencent.Core\Magicodes.Storage.Tencent.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Res\img.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
