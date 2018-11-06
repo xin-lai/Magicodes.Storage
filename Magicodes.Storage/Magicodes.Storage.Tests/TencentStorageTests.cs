@@ -36,13 +36,13 @@ namespace Magicodes.Storage.Tests
         [Fact(DisplayName = "腾讯云_删除容器")]
         public async Task DeleteContainer_Test()
         {
-            await StorageProvider.DeleteContainer("SaveBlob");
+            await StorageProvider.DeleteContainer("mtest-1256819585");
         }
         [Fact(DisplayName = "腾讯云_删除对象")]
         public async Task DeleteBlob_Test()
         {
-            await StorageProvider.SaveBlobStream("SaveBlob", "1.docx", TestStream);
-            await StorageProvider.DeleteBlob("SaveBlob", "1.docx");
+            await StorageProvider.SaveBlobStream("SaveBlob", "5.txt", TestStream);
+            await StorageProvider.DeleteBlob("SaveBlob", "5.txt");
         }
         [Fact(DisplayName = "腾讯云_获取文件信息")]
         public async Task GetBlobFileInfo_Test()
