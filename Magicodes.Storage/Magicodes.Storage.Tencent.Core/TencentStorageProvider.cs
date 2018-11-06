@@ -65,7 +65,7 @@ namespace Magicodes.Storage.Tencent.Core
                 Key = $"{containerName}/{blobName}"
             };
             DeleteObjectResponse response = await amazonS3Client.DeleteObjectAsync(request);
-            CheckResult(response);
+          
         }
 
         /// <summary>
@@ -78,7 +78,8 @@ namespace Magicodes.Storage.Tencent.Core
 
             DeleteBucketRequest request = new DeleteBucketRequest
             {
-                BucketName = StorageBucket.Name,
+              //BucketName = StorageBucket.Name
+               BucketName = $"{containerName}"
             };
             var response = await amazonS3Client.DeleteBucketAsync(request);
         }
@@ -148,7 +149,8 @@ namespace Magicodes.Storage.Tencent.Core
             GetPreSignedUrlRequest request = new GetPreSignedUrlRequest
             {
                 BucketName = StorageBucket.Name,
-                Key = $"{containerName}/{blobName}"
+                Key = $"{containerName}/{blobName}",
+                Expires=DateTime.Now
             };
             string url = amazonS3Client.GetPreSignedURL(request);
             return Task.FromResult(url);
