@@ -75,11 +75,16 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task DeleteContainer(string containerName)
         {
+            if (!string.IsNullOrEmpty(containerName))
+            {
+                throw new Exception("对象不为空，不允许删除！");
+            };
 
             DeleteBucketRequest request = new DeleteBucketRequest
             {
-              //BucketName = StorageBucket.Name
-               BucketName = $"{containerName}"
+
+                BucketName = StorageBucket.Name
+                //BucketName = $"{containerName}"
             };
             var response = await amazonS3Client.DeleteBucketAsync(request);
         }
