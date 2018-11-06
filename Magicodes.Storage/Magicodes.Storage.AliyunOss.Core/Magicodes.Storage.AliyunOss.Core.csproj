@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <Description>Magicodes.Storage.Core为湖南心莱信息科技有限公司封装的存储通用库，以便扩展支持本地存储、Azure存储等，支持.NET Core。其中，Magicodes.Storage.AliyunOss.Core为本地存储。\n官方网址：http://xin-lai.com \n开源库地址:https://github.com/xin-lai \n博客地址：http://www.cnblogs.com/codelove/ \n交流QQ群（.NET 技术交流群）：85318032 \n小店地址：https://shop113059108.taobao.com/</Description>
+    <Description>Magicodes.Storage.Core为湖南心莱信息科技有限公司封装的存储通用库，以便扩展支持本地存储、Azure存储等，支持.NET Core。其中，Magicodes.Storage.AliyunOss.Core为本地存储。\n官方网址：http://xin-lai.com \n开源库地址:https://github.com/xin-lai \n博客地址：http://www.cnblogs.com/codelove/ \n交流QQ群（.NET 技术交流群）：85318032 \n关注公众号“magiccodes”以获取最新资讯和教程。</Description>
     <PackageProjectUrl>https://github.com/xin-lai</PackageProjectUrl>
     <RepositoryUrl>https://github.com/xin-lai</RepositoryUrl>
     <PackageTags>Magicodes.Storage.AliyunOss.Core</PackageTags>

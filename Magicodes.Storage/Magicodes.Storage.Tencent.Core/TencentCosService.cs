@@ -1,40 +1,55 @@
-﻿using Magicodes.Storage.Core;
-using Magicodes.Storage.Tencent.Core.Auth;
+﻿// ======================================================================
+//   
+//           Copyright (C) 2018-2020 湖南心莱信息科技有限公司    
+//           All rights reserved
+//   
+//           filename : TencentCosService.cs
+//           description :
+//   
+//           created by 雪雁 at  2018-08-02 9:59
+//           Mail: wenqiang.li@xin-lai.com
+//           QQ群：85318032（技术交流）
+//           Blog：http://www.cnblogs.com/codelove/
+//           GitHub：https://github.com/xin-lai
+//           Home：http://xin-lai.com
+//   
+// ======================================================================
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
+using Magicodes.Storage.Core;
+using Magicodes.Storage.Tencent.Core.Auth;
 
 namespace Magicodes.Storage.Tencent.Core
 {
     /// <summary>
-    /// 腾讯云COS服务
+    ///     腾讯云COS服务
     /// </summary>
     public class TencentCosService
     {
-        public readonly TencentCosConfig Config = null;
-        public readonly Bucket StorageBucket = null;
-        private readonly HttpClient BackChannel;
-        private TencentCosSignHelper SignHelper = null;
+        private readonly HttpClient _backChannel;
+        public readonly TencentCosConfig Config;
+        public readonly Bucket StorageBucket;
+        private readonly TencentCosSignHelper _signHelper;
 
         public TencentCosService(TencentCosConfig cfg, Bucket bucket, HttpClient backChannel = null)
         {
             Config = cfg ?? throw new ArgumentNullException($"参数{nameof(cfg)}为空!");
             StorageBucket = bucket ?? throw new ArgumentNullException($"参数{nameof(bucket)}为空!");
-            BackChannel = backChannel ?? new HttpClient();
-            SignHelper = new TencentCosSignHelper(cfg);
+            _backChannel = backChannel ?? new HttpClient();
+            _signHelper = new TencentCosSignHelper(cfg);
         }
 
         /// <summary>
-        /// Bucket是否存在
+        ///     Bucket是否存在
         /// </summary>
         /// <returns></returns>
-
         public async Task<bool> BucketExists()
         {
             var endpoint = StorageBucket.Url + "/";
@@ -43,13 +58,12 @@ namespace Magicodes.Storage.Tencent.Core
             {
                 if (resp.StatusCode == HttpStatusCode.OK)
                     return true;
-                else
-                    return false;
+                return false;
             }
         }
 
         /// <summary>
-        /// ListBucketsAsync返回所有存储空间列表
+        ///     ListBucketsAsync返回所有存储空间列表
         /// </summary>
         /// <param name="endpoint"></param>
         /// <returns></returns>
@@ -59,9 +73,7 @@ namespace Magicodes.Storage.Tencent.Core
             using (var resp = await SendAsync(req))
             {
                 if (resp.StatusCode != HttpStatusCode.OK)
-                {
                     RequestFailure(HttpMethod.Get, resp.StatusCode, await resp.Content.ReadAsStringAsync());
-                }
 
                 var doc = new XmlDocument();
                 doc.LoadXml(await resp.Content.ReadAsStringAsync());
@@ -69,24 +81,25 @@ namespace Magicodes.Storage.Tencent.Core
                 foreach (XPathNavigator elem in doc.DocumentElement.CreateNavigator().Select("//Buckets/Bucket"))
                 {
                     var fullname = elem.SelectSingleNode("Name").InnerXml;
-                    var i = fullname.LastIndexOf("-");
+                    var i = fullname.LastIndexOf("-", StringComparison.Ordinal);
                     var bucket = new Bucket(
-                        appId: fullname.Substring(i + 1),
-                        name: fullname.Substring(0, i),
-                        region: elem.SelectSingleNode("Location").InnerXml);
+                        fullname.Substring(i + 1),
+                        fullname.Substring(0, i),
+                        elem.SelectSingleNode("Location").InnerXml);
                     buckets.Add(bucket);
                 }
+
                 return buckets.ToArray();
             }
         }
 
         /// <summary>
-        /// PutBucketAsync创建一个新的存储桶(Bucket)。
-        /// https://cloud.tencent.com/document/product/436/7738
+        ///     PutBucketAsync创建一个新的存储桶(Bucket)。
+        ///     https://cloud.tencent.com/document/product/436/7738
         /// </summary>
         /// <param name="name">桶名称</param>
         /// <param name="region">桶在区域</param>
-        /// <param name="header">自定义附加请求的标头</param>
+        /// <param name="headers">自定义附加请求的标头</param>
         /// <returns></returns>
         public async Task<Bucket> PutBucketAsync(string name, string region, Dictionary<string, string> headers = null)
         {
@@ -94,28 +107,20 @@ namespace Magicodes.Storage.Tencent.Core
             var endpoint = bucket.Url + "/";
             var req = new HttpRequestMessage(HttpMethod.Put, endpoint);
             if (headers?.Count > 0)
-            {
                 foreach (var header in headers)
-                {
                     req.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
             using (var resp = await SendAsync(req))
             {
                 var payload = await resp.Content.ReadAsStringAsync();
                 if (resp.StatusCode != HttpStatusCode.OK)
-                {
                     RequestFailure(HttpMethod.Put, resp.StatusCode, await resp.Content.ReadAsStringAsync());
-                }
                 return bucket;
             }
         }
 
         /// <summary>
-        /// DeleteBucketAsync删除一个指定的存储桶(Bucket)。
+        ///     DeleteBucketAsync删除一个指定的存储桶(Bucket)。
         /// </summary>
-        /// <param name="name">桶名称</param>
-        /// <param name="region">桶在区域</param>
         /// <returns></returns>
         public async Task DeleteBucketAsync()
         {
@@ -137,51 +142,42 @@ namespace Magicodes.Storage.Tencent.Core
         }
 
         /// <summary>
-        /// PutObjectAsync上传文件到指定的URL。
-        /// https://cloud.tencent.com/document/product/436/7749
+        ///     PutObjectAsync上传文件到指定的URL。
+        ///     https://cloud.tencent.com/document/product/436/7749
         /// </summary>
         /// <param name="objectName"></param>
         /// <param name="content"></param>
         /// <param name="header"></param>
         /// <returns></returns>
-        public async Task PutObjectAsync(string objectName, Stream content, 
+        public async Task PutObjectAsync(string objectName, Stream content,
             Dictionary<string, string> headers = null)
         {
             var endpoint = StorageBucket.Url + $"/{objectName}";
 
-            if (content == null)
-            {
-                throw new ArgumentNullException("content");
-            }
+            if (content == null) throw new ArgumentNullException(nameof(content));
             var req = new HttpRequestMessage(HttpMethod.Put, endpoint)
             {
                 Content = new StreamContent(content)
             };
             if (headers?.Count > 0)
-            {
                 foreach (var header in headers)
-                {
                     req.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
             using (var resp = await SendAsync(req))
             {
                 if (resp.StatusCode != HttpStatusCode.OK)
-                {
                     RequestFailure(HttpMethod.Put, resp.StatusCode, await resp.Content.ReadAsStringAsync());
-                }
             }
         }
 
         /// <summary>
-        /// 获取文件描述信息
+        ///     获取文件描述信息
         /// </summary>
         /// <param name="objectName">文件名称</param>
         /// <returns></returns>
         public async Task<BlobFileInfo> GetBlobFileInfo(string objectName)
         {
             var endpoint = StorageBucket.Url + $"/{objectName}";
-            BlobFileInfo fileInfo = new BlobFileInfo();
+            var fileInfo = new BlobFileInfo();
             var req = new HttpRequestMessage(HttpMethod.Head, endpoint);
             using (var resp = await SendAsync(req))
             {
@@ -192,16 +188,19 @@ namespace Magicodes.Storage.Tencent.Core
                     fileInfo.ETag = resp.Headers.ETag.ToString();
                 }
                 else
+                {
                     RequestFailure(HttpMethod.Head, resp.StatusCode, await resp.Content.ReadAsStringAsync());
+                }
             }
+
             return fileInfo;
         }
 
         /// <summary>
-        /// GetObjectAsync读取上传的文件内容。
-        /// https://cloud.tencent.com/document/product/436/7753
+        ///     GetObjectAsync读取上传的文件内容。
+        ///     https://cloud.tencent.com/document/product/436/7753
         /// </summary>
-        /// <param name="url"></param>
+        /// <param name="objectName"></param>
         /// <returns></returns>
         public async Task<Stream> GetObjectAsync(string objectName)
         {
@@ -210,20 +209,17 @@ namespace Magicodes.Storage.Tencent.Core
             var req = new HttpRequestMessage(HttpMethod.Get, endpoint);
             var resp = await SendAsync(req);
             if (resp.StatusCode != HttpStatusCode.OK)
-            {
                 RequestFailure(HttpMethod.Put, resp.StatusCode, await resp.Content.ReadAsStringAsync());
-            }
             return await resp.Content.ReadAsStreamAsync();
         }
 
         /// <summary>
-        /// DeleteObjectAsync删除指定的文件。
+        ///     DeleteObjectAsync删除指定的文件。
         /// </summary>
-        /// <param name="url"></param>
         /// <returns></returns>
         public async Task DeleteObjectAsync(Bucket bucket, string objectName)
         {
-            string url = string.Concat(bucket.Url, "/", objectName);
+            var url = string.Concat(bucket.Url, "/", objectName);
             var req = new HttpRequestMessage(HttpMethod.Delete, url);
 
             using (var resp = await SendAsync(req))
@@ -258,19 +254,19 @@ namespace Magicodes.Storage.Tencent.Core
 
 
         /// <summary>
-        /// 发送请求
+        ///     发送请求
         /// </summary>
         /// <param name="req">请求对象</param>
         /// <returns></returns>
         private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage req)
         {
             req.Headers.Host = req.RequestUri.Host;
-            req.Headers.TryAddWithoutValidation("Authorization", SignHelper.SignRequest(req));
-            return await BackChannel.SendAsync(req);
+            req.Headers.TryAddWithoutValidation("Authorization", _signHelper.SignRequest(req));
+            return await _backChannel.SendAsync(req);
         }
 
         /// <summary>
-        /// 请求失败处理
+        ///     请求失败处理
         /// </summary>
         /// <param name="method"></param>
         /// <param name="respStatusCode"></param>
@@ -282,14 +278,14 @@ namespace Magicodes.Storage.Tencent.Core
             var root = doc.DocumentElement.CreateNavigator().SelectSingleNode("//Error");
             var ex = new RequestFailureException(method.ToString(), root.SelectSingleNode("Message").InnerXml)
             {
-                HttpStatusCode = (int)respStatusCode,
+                HttpStatusCode = (int) respStatusCode,
                 ErrorCode = root.SelectSingleNode("Code").InnerXml,
-                ResourceURL = root.SelectSingleNode("Resource").InnerXml,
+                ResourceUrl = root.SelectSingleNode("Resource").InnerXml,
                 RequestId = root.SelectSingleNode("RequestId").InnerXml,
-                TraceId = root.SelectSingleNode("TraceId").InnerXml,
+                TraceId = root.SelectSingleNode("TraceId").InnerXml
             };
             throw new StorageException(StorageErrorCode.PostError.ToStorageError(),
-              new Exception(ex.ToString()));
+                new Exception(ex.ToString()));
         }
 
         //private StorageException GetStorageExcept(HttpMethod method, HttpStatusCode respStatusCode,
@@ -319,6 +315,5 @@ namespace Magicodes.Storage.Tencent.Core
         //    //        break;
         //    //}
         //}
-
     }
 }
