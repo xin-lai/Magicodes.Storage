@@ -15,22 +15,20 @@ namespace Magicodes.Storage.Tests
     [Trait("Group", "腾讯云存储测试")]
     public class TencentStorageTests : TestBase, IDisposable
     {
-        private string rootPath;
-        TencentStorageProvider TencentStorage;
         public TencentStorageTests()
         {
-
-            TencentCosConfig cosConfig = new TencentCosConfig()
+            var cosConfig = new TencentCosConfig()
             {
                 //这里使用自己的腾讯云相关配置
                 AppId = "1256819585",
                 SecretId = "AKIDVoumQq0ziDVZP0qTKwJTQ7lCPO9hf7ya",
                 SecretKey = "WnoZ4KK5appZ4JJciZDdomZ9VcVAbnlX",
+                BucketName = "mtest-1256819585",
+                Region = "ap-chengdu"
             };
 
-            Bucket bucket = new Bucket(cosConfig.AppId, "mtest-1256819585", "ap-chengdu");
-            TencentStorage = new TencentStorageProvider(cosConfig, bucket);
-            StorageProvider = TencentStorage;
+            var tencentStorage = new TencentStorageProvider(cosConfig);
+            StorageProvider = tencentStorage;
         }
 
         [Fact(DisplayName = "腾讯云_删除容器")]
