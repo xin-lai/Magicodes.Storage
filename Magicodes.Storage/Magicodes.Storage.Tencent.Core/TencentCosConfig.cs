@@ -36,5 +36,15 @@ namespace Magicodes.Storage.Tencent.Core
         ///     秘钥Key
         /// </summary>
         public string SecretKey { get; set; }
+
+        /// <summary>
+        ///     区域
+        /// </summary>
+        public string Region { get; set; } = "ap-guangzhou";
+
+        /// <summary>
+        ///    存储桶名称
+        /// </summary>
+        public string BucketName { get; set; }
     }
 }
