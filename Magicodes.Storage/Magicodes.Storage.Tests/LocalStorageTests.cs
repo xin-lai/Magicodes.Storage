@@ -1,21 +1,34 @@
-﻿using System;
-using Magicodes.Storage.Local.Core;
+﻿// ======================================================================
+//   
+//           Copyright (C) 2018-2020 湖南心莱信息科技有限公司    
+//           All rights reserved
+//   
+//           filename : LocalStorageTests.cs
+//           description :
+//   
+//           created by 雪雁 at  2018-06-07 10:31
+//           Mail: wenqiang.li@xin-lai.com
+//           QQ群：85318032（技术交流）
+//           Blog：http://www.cnblogs.com/codelove/
+//           GitHub：https://github.com/xin-lai
+//           Home：http://xin-lai.com
+//   
+// ======================================================================
+
+using System;
 using System.IO;
-using System.Threading.Tasks;
-using Xunit;
-using Magicodes.Storage.Core;
-using Shouldly;
 using System.Threading;
+using System.Threading.Tasks;
+using Magicodes.Storage.Core;
+using Magicodes.Storage.Local.Core;
+using Shouldly;
+using Xunit;
 
 namespace Magicodes.Storage.Tests
 {
     [Trait("Group", "本地存储测试")]
     public class LocalStorageTests : TestBase, IDisposable
     {
-
-        private string rootPath;
-        private string rootUrl;
-
         public LocalStorageTests()
         {
             rootPath = Path.Combine(Directory.GetCurrentDirectory(), "Files");
@@ -24,6 +37,14 @@ namespace Magicodes.Storage.Tests
             rootUrl = "/";
             StorageProvider = new LocalStorageProvider(rootPath, rootUrl);
         }
+
+        public void Dispose()
+        {
+            //TODO：数据清理
+        }
+
+        private readonly string rootPath;
+        private readonly string rootUrl;
 
         [Fact(DisplayName = "本地文件删除测试")]
         public async Task DeleteBlob_Test()
@@ -40,7 +61,7 @@ namespace Magicodes.Storage.Tests
             await StorageProvider.DeleteBlob(ContainerName, "3.txt");
 
             await Assert.ThrowsAnyAsync<StorageException>(async () =>
-               await StorageProvider.DeleteBlob("AAAAAAAAAAAAA", "notfound.txt")
+                await StorageProvider.DeleteBlob("AAAAAAAAAAAAA", "notfound.txt")
             );
         }
 
@@ -54,11 +75,10 @@ namespace Magicodes.Storage.Tests
             await StorageProvider.DeleteContainer(containerName);
 
             await Assert.ThrowsAnyAsync<StorageException>(async () =>
-               await StorageProvider.DeleteContainer("AAAAAAAAAAAAA")
+                await StorageProvider.DeleteContainer("AAAAAAAAAAAAA")
             );
         }
 
-        
 
         [Fact(DisplayName = "本地文件详情获取测试")]
         public async Task GetBlobFileInfo_Test()
@@ -77,7 +97,7 @@ namespace Magicodes.Storage.Tests
             result.ContentType.ShouldNotBeNullOrWhiteSpace();
 
             await Assert.ThrowsAnyAsync<StorageException>(async () =>
-               await StorageProvider.GetBlobFileInfo(ContainerName, "notfound.txt")
+                await StorageProvider.GetBlobFileInfo(ContainerName, "notfound.txt")
             );
         }
 
@@ -88,7 +108,7 @@ namespace Magicodes.Storage.Tests
             if (!Directory.Exists(containerPath)) Directory.CreateDirectory(containerPath);
 
             await Assert.ThrowsAnyAsync<NotSupportedException>(async () =>
-               await StorageProvider.GetBlobUrl(ContainerName, "notfound.txt", DateTime.Now.AddDays(1))
+                await StorageProvider.GetBlobUrl(ContainerName, "notfound.txt", DateTime.Now.AddDays(1))
             );
         }
 
@@ -106,7 +126,7 @@ namespace Magicodes.Storage.Tests
             result.Length.ShouldBeGreaterThan(0);
 
             await Assert.ThrowsAnyAsync<StorageException>(async () =>
-               await StorageProvider.GetBlobStream(ContainerName, "notfound.txt")
+                await StorageProvider.GetBlobStream(ContainerName, "notfound.txt")
             );
         }
 
@@ -127,7 +147,7 @@ namespace Magicodes.Storage.Tests
             result.ShouldContain("/" + ContainerName + "/");
 
             await Assert.ThrowsAnyAsync<StorageException>(async () =>
-               await StorageProvider.GetBlobUrl(ContainerName, "notfound.txt")
+                await StorageProvider.GetBlobUrl(ContainerName, "notfound.txt")
             );
         }
 
@@ -159,11 +179,5 @@ namespace Magicodes.Storage.Tests
 
             File.Exists(Path.Combine(containerPath, "1.txt")).ShouldBe(true);
         }
-
-        public void Dispose()
-        {
-            //TODO：数据清理
-        }
     }
 }
-
