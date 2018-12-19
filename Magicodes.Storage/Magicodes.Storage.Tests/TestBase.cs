@@ -31,7 +31,7 @@ namespace Magicodes.Storage.Tests
             var str = "demo";
             var array = Encoding.UTF8.GetBytes(str);
             TestStream = new MemoryStream(array);
-            ContainerName = GetTestContainerName();
+            ContainerName = "magicodes";
         }
 
         protected IStorageProvider StorageProvider { get; set; }

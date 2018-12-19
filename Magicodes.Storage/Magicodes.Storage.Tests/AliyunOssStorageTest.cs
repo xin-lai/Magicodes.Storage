@@ -18,6 +18,8 @@
 using System;
 using System.Threading.Tasks;
 using Magicodes.Storage.AliyunOss.Core;
+using Magicodes.Storage.Tests.Helper;
+using Shouldly;
 using Xunit;
 
 namespace Magicodes.Storage.Tests
@@ -29,72 +31,100 @@ namespace Magicodes.Storage.Tests
         {
             var config = new AliyunOssConfig
             {
+                //这里使用自己的相关配置完成测试
                 AccessKeyId = "",
                 AccessKeySecret = "",
                 Endpoint = ""
             };
+            //如果没填，尝试从配置文件加载
+            if (string.IsNullOrWhiteSpace(config.AccessKeyId))
+            {
+                config = ConfigHelper.LoadConfig<AliyunOssConfig>("AliyunOssStorage");
+            }
+            var storage = new AliyunOssStorageProvider(config);
             StorageProvider = new AliyunOssStorageProvider(config);
         }
-
         public void Dispose()
         {
         }
 
-        [Theory(DisplayName = "阿里云文件上传")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task SaveBlobStream_Test(string containerName, string blobName)
+        [Fact(DisplayName = "阿里云_删除对象")]
+        public async Task DeleteBlob_Test()
         {
-            await StorageProvider.SaveBlobStream(containerName, blobName, TestStream);
+            var fileName = await CreateTestFile();
+            await StorageProvider.DeleteBlob(ContainerName, fileName);
+
         }
 
-        [Theory(DisplayName = "阿里云文件获取")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task GetBlobStream_Test(string containerName, string blobName)
+        private async Task<string> CreateTestFile()
         {
-            await StorageProvider.GetBlobStream(containerName, blobName);
+            var fileName = GetTestFileName();
+            await StorageProvider.SaveBlobStream(ContainerName, fileName, TestStream);
+            return fileName;
         }
 
-        [Theory(DisplayName = "阿里云获取文件路径")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task GetBlobUrl_Test(string containerName, string blobName)
+        [Fact(DisplayName = "阿里云_删除容器")]
+        public async Task DeleteContainer_Test()
         {
-            await StorageProvider.GetBlobUrl(containerName, blobName);
+            var fileName = GetTestFileName();
+            await StorageProvider.DeleteContainer(ContainerName);
         }
 
-        [Theory(DisplayName = "阿里云获取文件")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task GetBlobFileInfo_Test(string containerName, string blobName)
+        [Fact(DisplayName = "阿里云_获取文件信息")]
+        public async Task GetBlobFileInfo_Test()
         {
-            await StorageProvider.GetBlobFileInfo(containerName, blobName);
+            var fileName = await CreateTestFile();
+            var result = await StorageProvider.GetBlobFileInfo(ContainerName, fileName);
+            result.Name.ShouldBe(fileName);
+            result.Length.ShouldBeGreaterThan(0);
+            result.Url.ShouldNotBeNullOrWhiteSpace();
+            result.ETag.ShouldNotBeNull();
+            result.ContentType.ShouldNotBeNull();
         }
 
-        [Theory(DisplayName = "阿里云获取文件列表")]
-        [InlineData("dzsshow")]
-        public async Task ListBlobs_Test(string containerName)
+        [Fact(DisplayName = "获取文件的流信息")]
+        public async Task GetBlobStream_Test()
         {
-            await StorageProvider.ListBlobs(containerName);
+            var fileName = await CreateTestFile();
+            var result = await StorageProvider.GetBlobStream(ContainerName, fileName);
+            result.Length.ShouldBeGreaterThan(0);
+
         }
 
-        [Theory(DisplayName = "阿里云删除文件")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task DeleteBlob_Test(string containerName, string blobName)
+        [Fact(DisplayName = "阿里云_获取授权访问链接")]
+        public async Task GetBlobUrl_Test()
         {
-            await StorageProvider.DeleteBlob(containerName, blobName);
+            var fileName = await CreateTestFile();
+            var result = await StorageProvider.GetBlobUrl(ContainerName, fileName, DateTime.Now);
+            result.ShouldNotBeNullOrWhiteSpace();
         }
 
-        [Theory(DisplayName = "阿里云删除容器")]
-        [InlineData("dzsshow")]
-        public async Task DeleteContainer_Test(string containerName)
+        [Fact(DisplayName = "阿里云_获取访问链接(两个参数)")]
+        public async Task GetBlobUrl1_Test()
         {
-            await StorageProvider.DeleteContainer(containerName);
+            var fileName = await CreateTestFile();
+            var result = await StorageProvider.GetBlobUrl(ContainerName, fileName);
+            result.ShouldNotBeNullOrWhiteSpace();
         }
 
-        [Theory(DisplayName = "阿里云获取文件路径")]
-        [InlineData("dzsshow", "aliyunblob1.txt")]
-        public async Task GetBlobUrlAccess_Test(string containerName, string blobName)
+        [Fact(DisplayName = "阿里云_列出指定容器下的对象列表")]
+        public async Task ListBlobs_Test()
         {
-            var expiry = DateTime.Now.AddHours(1);
-            await StorageProvider.GetBlobUrl(containerName, blobName, expiry);
+            var fileName = await CreateTestFile();
+            var result = await StorageProvider.ListBlobs(ContainerName);
+            result.ShouldNotBeNull();
+            result.Count.ShouldBeGreaterThan(0);
+        }
+
+        [Fact(DisplayName = "阿里云_本地文件上传测试")]
+        public async Task SaveBlobStream_Test()
+        {
+            var testFileName = GetTestFileName();
+            await StorageProvider.SaveBlobStream(ContainerName, testFileName, TestStream);
+            var result = await StorageProvider.GetBlobFileInfo(ContainerName, testFileName);
+            result.ShouldNotBeNull();
+            result.Name.ShouldNotBeNullOrWhiteSpace();
+            result.Name.ShouldBe(testFileName);
         }
     }
 }

@@ -32,14 +32,14 @@ namespace Magicodes.Storage.Tests
             var cosConfig = new TencentCosConfig
             {
                 //这里使用自己的腾讯云相关配置
-                //AppId = "",
-                //SecretId = "",
-                //SecretKey = "",
-                //BucketName = "test",
-                //Region = "ap-chengdu"
+                AppId = "",
+                SecretId = "",
+                SecretKey = "",
+                BucketName = "test",
+                Region = "ap-chengdu"
             };
-
-            if (cosConfig.AppId == null)
+            //如果没填，尝试从配置文件加载
+            if (string.IsNullOrWhiteSpace(cosConfig.AppId))
             {
                 cosConfig = ConfigHelper.LoadConfig<TencentCosConfig>("TencentStorage");
             }
