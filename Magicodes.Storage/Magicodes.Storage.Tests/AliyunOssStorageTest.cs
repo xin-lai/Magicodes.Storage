@@ -16,6 +16,7 @@
 // ======================================================================
 
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Magicodes.Storage.AliyunOss.Core;
 using Magicodes.Storage.Tests.Helper;
@@ -87,7 +88,7 @@ namespace Magicodes.Storage.Tests
         {
             var fileName = await CreateTestFile();
             var result = await StorageProvider.GetBlobStream(ContainerName, fileName);
-            result.Length.ShouldBeGreaterThan(0);
+            result.ShouldNotBeNull();
 
         }
 

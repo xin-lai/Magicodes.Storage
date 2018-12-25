@@ -16,5 +16,10 @@
         /// OSS的访问地址
         /// </summary>
         public string Endpoint { get; set; }
+
+        /// <summary>
+        ///    存储桶名称
+        /// </summary>
+        public string BucketName { get; set; }
     }
 }

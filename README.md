@@ -34,9 +34,11 @@ Magicodes.Admin开源库地址：https://gitee.com/xl_wenqiang/Magicodes.Admin.Core
 这是目前的下个版本的规划：
 
 * 支持分块上传
+* 支持存储桶的创建和删除
 * 支持Azure存储
 * 支持亚马逊存储
 * 支持七牛云
+* 阿里云的SDK包更新为官方的包(目前还存在问题)
 
 具体功能我们会根据项目的情况来迭代，如果你有好的建议或者意见，可以关注我们的公众号“magiccodes”来提交您的意见或者意见。
 
@@ -61,9 +63,7 @@ Magicodes.Admin开源库地址：https://gitee.com/xl_wenqiang/Magicodes.Admin.Core
 
 ## 单元测试：
 
-![参考](res/4.png)
-
-阿里云我们还需要稍微改造下。
+![参考](res/5.png)
 
 
 ## 官方订阅号

@@ -34,16 +34,16 @@ namespace Magicodes.Storage.Core
         /// <summary>
         /// 保存对象到指定的容器
         /// </summary>
-        /// <param name="containerName"></param>
-        /// <param name="blobName"></param>
-        /// <param name="source"></param>
+        /// <param name="containerName">目录名称</param>
+        /// <param name="blobName">文件对象名称</param>
+        /// <param name="source">流</param>
         Task SaveBlobStream(string containerName, string blobName, Stream source);
 
         /// <summary>
         /// 获取对象
         /// </summary>
-        /// <param name="containerName"></param>
-        /// <param name="blobName"></param>
+        /// <param name="containerName">目录</param>
+        /// <param name="blobName">文件对象名称</param>
         /// <returns></returns>
         Task<Stream> GetBlobStream(string containerName, string blobName);
 

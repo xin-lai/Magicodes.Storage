@@ -1,22 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Aliyun.OSS;
+﻿using Aliyun.OSS;
 using Aliyun.OSS.Util;
 using Magicodes.Storage.Core;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Magicodes.Storage.AliyunOss.Core
 {
     public class AliyunOssStorageProvider : IStorageProvider
     {
+        private readonly AliyunOssConfig _cfg;
         private readonly string _baseUrl;
         private readonly OssClient _ossClient;
 
         public AliyunOssStorageProvider(AliyunOssConfig cfg)
         {
+            _cfg = cfg;
             _ossClient = new OssClient(cfg.Endpoint, cfg.AccessKeyId, cfg.AccessKeySecret);
-            _baseUrl = "https://{0}." + cfg.Endpoint + "/{1}";
+
+            _baseUrl = $"https://{cfg.BucketName}.{cfg.Endpoint}";
         }
 
         public string ProviderName => "AliyunOss";
@@ -32,15 +36,14 @@ namespace Magicodes.Storage.AliyunOss.Core
             try
             {
                 await Task.Run(() =>
-                {
-                    var exist = _ossClient.DoesBucketExist(containerName);
-                    if (!exist) _ossClient.CreateBucket(containerName);
-                    var md5 = OssUtils.ComputeContentMd5(source, source.Length);
-                    var objectMeta = new ObjectMetadata();
-                    objectMeta.AddHeader("Content-MD5", md5);
-                    objectMeta.UserMetadata.Add("Content-MD5", md5);
-                    _ossClient.PutObject(containerName, blobName, source, objectMeta);
-                });
+                    {
+                        var key = $"{containerName}/{blobName}";
+                        var md5 = OssUtils.ComputeContentMd5(source, source.Length);
+                        var objectMeta = new ObjectMetadata();
+                        objectMeta.AddHeader("Content-MD5", md5);
+                        objectMeta.UserMetadata.Add("Content-MD5", md5);
+                        _ossClient.PutObject(_cfg.BucketName, key, source, objectMeta).HandlerError("上传对象出错");
+                    });
             }
             catch (Exception ex)
             {
@@ -61,10 +64,13 @@ namespace Magicodes.Storage.AliyunOss.Core
             {
                 return await Task.Run(() =>
                 {
-                    var blob = _ossClient.GetObject(containerName, blobName);
-                    if (blob == null)
+                    var key = $"{containerName}/{blobName}";
+                    var blob = _ossClient.GetObject(_cfg.BucketName, key).HandlerError("获取对象出错");
+                    if (blob == null || blob.ContentLength == 0)
+                    {
                         throw new StorageException(StorageErrorCode.FileNotFound.ToStorageError(),
                             new Exception("没有找到该文件"));
+                    }
                     return blob.Content;
                 });
             }
@@ -81,10 +87,7 @@ namespace Magicodes.Storage.AliyunOss.Core
         /// <param name="containerName"></param>
         /// <param name="blobName"></param>
         /// <returns></returns>
-        public async Task<string> GetBlobUrl(string containerName, string blobName)
-        {
-            return await Task.Run(() => string.Format(_baseUrl, containerName, blobName));
-        }
+        public async Task<string> GetBlobUrl(string containerName, string blobName) => await Task.Run(() => $"{_baseUrl}/{containerName}/{blobName}");
 
         /// <summary>
         ///     获取对象属性
@@ -98,7 +101,8 @@ namespace Magicodes.Storage.AliyunOss.Core
             {
                 return await Task.Run(() =>
                 {
-                    var result = _ossClient.GetObjectMetadata(containerName, blobName);
+                    var key = $"{containerName}/{blobName}";
+                    var result = _ossClient.GetObjectMetadata(_cfg.BucketName, key);
                     return new BlobFileInfo
                     {
                         Container = containerName,
@@ -131,9 +135,17 @@ namespace Magicodes.Storage.AliyunOss.Core
             {
                 return await Task.Run(() =>
                 {
-                    var listObjectsRequest = new ListObjectsRequest(containerName);
-                    var result = _ossClient.ListObjects(listObjectsRequest);
+                    if (!string.IsNullOrWhiteSpace(containerName) && !containerName.EndsWith("/"))
+                    {
+                        containerName += "/";
+                    }
+                    var listObjectsRequest = new ListObjectsRequest(_cfg.BucketName)
+                    {
+                        Prefix = containerName
+                    };
+                    var result = _ossClient.ListObjects(listObjectsRequest).HandlerError("获取对象列表出错！");
                     foreach (var summary in result.ObjectSummaries)
+                    {
                         blobFileInfos.Add(new BlobFileInfo
                         {
                             Container = summary.BucketName,
@@ -143,6 +155,8 @@ namespace Magicodes.Storage.AliyunOss.Core
                             Length = summary.Size,
                             Url = string.Format(_baseUrl, summary.BucketName, summary.Key)
                         });
+                    }
+
                     return blobFileInfos;
                 });
             }
@@ -160,29 +174,44 @@ namespace Magicodes.Storage.AliyunOss.Core
         /// <param name="blobName"></param>
         public async Task DeleteBlob(string containerName, string blobName)
         {
-            await Task.Run(() =>
+            try
             {
-                try
+                await Task.Run(() =>
                 {
-                    _ossClient.DeleteObject(containerName, blobName);
-                }
-                catch (Exception ex)
-                {
-                    throw new StorageException(StorageErrorCode.PostError.ToStorageError(),
-                        new Exception(ex.ToString()));
-                }
-            });
+                    var key = $"{containerName}/{blobName}";
+                    _ossClient.DeleteObject(_cfg.BucketName, key);
+
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new StorageException(StorageErrorCode.PostError.ToStorageError(),
+                    new Exception(ex.ToString()));
+            }
         }
 
         /// <summary>
-        ///     删除容器
+        ///     删除目录（会删除下面所有的文件）
         /// </summary>
         /// <param name="containerName"></param>
         public async Task DeleteContainer(string containerName)
         {
             try
             {
-                await Task.Run(() => { _ossClient.DeleteBucket(containerName); });
+                //删除目录等于删除该目录下的所有文件
+                var blobs = await ListBlobs(containerName);
+                await Task.Run(() =>
+                {
+                    var count = blobs.Count / 1000 + (blobs.Count % 1000 > 0 ? 1 : 0);
+
+                    for (var i = 0; i < count; i++)
+                    {
+                        var request = new DeleteObjectsRequest(_cfg.BucketName,
+                            blobs.Skip(i * 1000).Take(1000).Select(p => $"{containerName}/{p.Name}").ToList());
+
+                        _ossClient.DeleteObjects(request).HandlerError("删除对象时出错(删除目录会删除该目录下所有的文件)!");
+                    }
+                });
             }
             catch (Exception ex)
             {
