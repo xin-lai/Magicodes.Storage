@@ -51,7 +51,7 @@ namespace Magicodes.Storage.Tests
             StorageProvider = tencentStorage;
         }
 
-        public void Dispose()
+        public void Dispose()   
         {
         }
 
@@ -87,6 +87,15 @@ namespace Magicodes.Storage.Tests
             result.Url.ShouldNotBeNullOrWhiteSpace();
             result.ETag.ShouldNotBeNull();
             result.ContentType.ShouldNotBeNull();
+
+            ////System.Threading.Thread.Sleep(20000);
+            //result = await StorageProvider.GetBlobFileInfo(ContainerName, fileName);
+            //result.Name.ShouldBe(fileName);
+            //result.Length.ShouldBeGreaterThan(0);
+            //result.Url.ShouldNotBeNullOrWhiteSpace();
+            //result.ETag.ShouldNotBeNull();
+            //result.ContentType.ShouldNotBeNull();
+
         }
 
         [Fact(DisplayName = "获取文件的流信息")]

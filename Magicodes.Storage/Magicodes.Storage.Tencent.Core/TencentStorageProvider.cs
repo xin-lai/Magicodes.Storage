@@ -28,6 +28,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using COSXML.Utils;
+using COSXML.Model.Tag;
 
 namespace Magicodes.Storage.Tencent.Core
 {
@@ -139,7 +140,7 @@ namespace Magicodes.Storage.Tencent.Core
             var request = new GetObjectBytesRequest(_tcConfig.BucketName, $"{containerName}/{blobName}");
 
             var response = _cosXmlServer.GetObject(request);
-            
+
 
             await response.HandlerError("下载文件出错!");
             byte[] content = response.content;
@@ -150,15 +151,19 @@ namespace Magicodes.Storage.Tencent.Core
 
         public Task<string> GetBlobUrl(string containerName, string blobName)
         {
-            //var request = new GetPreSignedUrlRequest
-            //{
-            //    BucketName = _tcConfig.BucketName,
-            //    Key = $"{containerName}/{blobName}",
-            //    Expires = DateTime.Now
-            //};
-            //var url = _amazonS3Client.GetPreSignedURL(request);
-            //return Task.FromResult(url);
-            throw new NotImplementedException();
+            var preSignatureStruct = new PreSignatureStruct();
+            preSignatureStruct.appid = _tcConfig.AppId;//腾讯云账号 APPID
+            preSignatureStruct.region = _tcConfig.Region; //存储桶地域
+            preSignatureStruct.bucket = _tcConfig.BucketName; //存储桶
+            preSignatureStruct.key = $"{containerName}/{blobName}"; //对象键
+            preSignatureStruct.httpMethod = "PUT"; //HTTP 请求方法
+            preSignatureStruct.isHttps = true; //生成 HTTPS 请求 URL
+            preSignatureStruct.signDurationSecond = 600; //请求签名时间为 600s
+            preSignatureStruct.headers = null;//签名中需要校验的 header
+            preSignatureStruct.queryParameters = null; //签名中需要校验的 URL 中请求参数
+
+            var url = _cosXmlServer.GenerateSignURL(preSignatureStruct);
+            return Task.FromResult(url);
         }
 
         /// <summary>
@@ -175,17 +180,19 @@ namespace Magicodes.Storage.Tencent.Core
         public Task<string> GetBlobUrl(string containerName, string blobName, DateTime expiry, bool isDownload = false,
             string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read)
         {
-            //var request = new GetPreSignedUrlRequest
-            //{
-            //    BucketName = _tcConfig.BucketName,
-            //    Key = $"{containerName}/{blobName}",
-            //    Expires = expiry,
-            //    ContentType = contentType
-            //};
+            var preSignatureStruct = new PreSignatureStruct();
+            preSignatureStruct.appid = _tcConfig.AppId;//腾讯云账号 APPID
+            preSignatureStruct.region = _tcConfig.Region; //存储桶地域
+            preSignatureStruct.bucket = _tcConfig.BucketName; //存储桶
+            preSignatureStruct.key = $"{containerName}/{blobName}"; //对象键
+            preSignatureStruct.httpMethod = "PUT"; //HTTP 请求方法
+            preSignatureStruct.isHttps = true; //生成 HTTPS 请求 URL
+            preSignatureStruct.signDurationSecond = (long)(expiry - DateTime.Now).TotalSeconds; //请求签名时间为 600s
+            preSignatureStruct.headers = null;//签名中需要校验的 header
+            preSignatureStruct.queryParameters = null; //签名中需要校验的 URL 中请求参数
 
-            //var url = _amazonS3Client.GetPreSignedURL(request);
-            //return Task.FromResult(url);
-            throw new NotImplementedException();
+            var url = _cosXmlServer.GenerateSignURL(preSignatureStruct);
+            return Task.FromResult(url);
         }
 
         /// <summary>
