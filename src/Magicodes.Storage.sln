@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Core", "Magicodes.Storage.Core\Magicodes.Storage.Core.csproj", "{51B86AF9-5029-48C8-AB53-DDA8786BD427}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Local.Core", "Magicodes.Storage.Local.Core\Magicodes.Storage.Local.Core.csproj", "{E0455428-372A-449D-AD38-CEA289F55147}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Tests", "Magicodes.Storage.Tests\Magicodes.Storage.Tests.csproj", "{EC66D526-32F4-459C-972B-63853E3B5801}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.Tencent.Core", "Magicodes.Storage.Tencent.Core\Magicodes.Storage.Tencent.Core.csproj", "{AA762A03-98CE-40B4-803F-5D66E0C89327}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Magicodes.Storage.AliyunOss.Core", "Magicodes.Storage.AliyunOss.Core\Magicodes.Storage.AliyunOss.Core.csproj", "{CD1656DE-BA57-4723-A5F2-785683E4F364}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3CA27E11-C493-4343-BF72-0395221B7FED}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51B86AF9-5029-48C8-AB53-DDA8786BD427}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0455428-372A-449D-AD38-CEA289F55147}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC66D526-32F4-459C-972B-63853E3B5801}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC66D526-32F4-459C-972B-63853E3B5801}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC66D526-32F4-459C-972B-63853E3B5801}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC66D526-32F4-459C-972B-63853E3B5801}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA762A03-98CE-40B4-803F-5D66E0C89327}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD1656DE-BA57-4723-A5F2-785683E4F364}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD1656DE-BA57-4723-A5F2-785683E4F364}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD1656DE-BA57-4723-A5F2-785683E4F364}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD1656DE-BA57-4723-A5F2-785683E4F364}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC74E527-A5D6-4047-AB08-B7ADE63813AE}
+	EndGlobalSection
+EndGlobal
