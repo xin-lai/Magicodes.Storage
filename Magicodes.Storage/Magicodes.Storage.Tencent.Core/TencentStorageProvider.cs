@@ -15,14 +15,19 @@
 //   
 // ======================================================================
 
-using Amazon.S3;
-using Amazon.S3.Model;
+using COSXML;
+using COSXML.Auth;
+using COSXML.Model.Object;
+using COSXML.Model.Bucket;
+using COSXML.CosException;
 using Magicodes.Storage.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using COSXML.Utils;
 
 namespace Magicodes.Storage.Tencent.Core
 {
@@ -32,7 +37,7 @@ namespace Magicodes.Storage.Tencent.Core
     public class TencentStorageProvider : IStorageProvider
     {
         private readonly TencentCosConfig _tcConfig;
-        private readonly AmazonS3Client _amazonS3Client;
+        private readonly CosXmlServer _cosXmlServer;
 
         /// <summary>
         ///     腾讯云存储对象提供构造函数
@@ -41,17 +46,21 @@ namespace Magicodes.Storage.Tencent.Core
         public TencentStorageProvider(TencentCosConfig tcConfig)
         {
             _tcConfig = tcConfig;
-            var config = new AmazonS3Config
-            {
-                //注意要将<region>替换为相对应的region，如ap-beijing，ap-guangzhou...
-                //ServiceURL = $"http://{bucket.Name}.cos.{bucket.Region}.myqcloud.com",
-                ServiceURL = $"http://cos.{tcConfig.Region}.myqcloud.com",
-            };
-            _amazonS3Client = new AmazonS3Client(
-                tcConfig.SecretId,
-                tcConfig.SecretKey,
-                config
-            );
+            var config = new CosXmlConfig.Builder()
+              .SetConnectionTimeoutMs(60000)  //设置连接超时时间，单位毫秒，默认45000ms
+              .SetReadWriteTimeoutMs(40000)  //设置读写超时时间，单位毫秒，默认45000ms
+              .IsHttps(true)  //设置默认 HTTPS 请求
+              .SetAppid(tcConfig.AppId)  //设置腾讯云账户的账户标识 APPID
+              .SetRegion(tcConfig.Region)  //设置一个默认的存储桶地域
+              .SetDebugLog(true)  //显示日志
+              .Build();  //创建 CosXmlConfig 对象
+
+            //初始化 QCloudCredentialProvider，COS SDK 中提供了3种方式：永久密钥、临时密钥、自定义
+            QCloudCredentialProvider cosCredentialProvider = new DefaultQCloudCredentialProvider(tcConfig.SecretId, tcConfig.SecretKey, 600);
+
+
+            //初始化 CosXmlServer
+            _cosXmlServer = new CosXmlServer(config, cosCredentialProvider);
         }
 
         /// <summary>
@@ -67,13 +76,11 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="blobName">文件名称</param>
         public async Task DeleteBlob(string containerName, string blobName)
         {
-            var request = new DeleteObjectRequest
-            {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}"
-            };
-            var response = await _amazonS3Client.DeleteObjectAsync(request);
-            response.HandlerError("删除对象出错!");
+            var request = new DeleteObjectRequest(_tcConfig.BucketName, $"{containerName}/{blobName}");
+            //设置签名有效时长
+            request.SetSign(TimeUtils.GetCurrentTime(TimeUnit.SECONDS), 600);
+            var response = _cosXmlServer.DeleteObject(request);
+            await response.HandlerError("删除对象出错!");
         }
 
         /// <summary>
@@ -89,17 +96,10 @@ namespace Magicodes.Storage.Tencent.Core
 
             for (var i = 0; i < count; i++)
             {
-                var request = new DeleteObjectsRequest
-                {
-                    BucketName = _tcConfig.BucketName,
-                    Objects = objs.Skip(i * 1000).Take(1000).Select(p => new KeyVersion
-                    {
-                        Key = $"{containerName}/{p.Name}",
-                        VersionId = null
-                    }).ToList()
-                };
-                var response = await _amazonS3Client.DeleteObjectsAsync(request);
-                response.HandlerError("删除对象时出错(删除目录会删除该目录下所有的文件)!");
+                var request = new DeleteMultiObjectRequest(_tcConfig.BucketName);
+                request.SetObjectKeys(objs.Skip(i * 1000).Take(1000).Select(p => p.Name).ToList());
+                var response = _cosXmlServer.DeleteMultiObjects(request);
+                await response.HandlerError("删除对象时出错(删除目录会删除该目录下所有的文件)!");
             }
         }
 
@@ -111,23 +111,20 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task<BlobFileInfo> GetBlobFileInfo(string containerName, string blobName)
         {
-            var request = new GetObjectRequest
-            {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}"
-            };
-            var response = await _amazonS3Client.GetObjectAsync(request);
-            response.HandlerError("获取文件信息出错!");
+            var key = $"{containerName}/{blobName}";
+            var request = new HeadObjectRequest(_tcConfig.BucketName, key);
+            var response = _cosXmlServer.HeadObject(request);
+            await response.HandlerError("获取文件信息出错!");
             return new BlobFileInfo
             {
                 Container = containerName,
-                ContentMD5 = response.Headers.ContentMD5,
-                ContentType = response.Headers.ContentType,
-                ETag = response.ETag,
-                Length = response.ContentLength,
-                LastModified = response.LastModified,
+                //ContentMD5 = response.Headers.ContentMD5,
+                ContentType = response.responseHeaders.ContainsKey("Content-Type") ? (response.responseHeaders["Content-Type"].FirstOrDefault()) : null,
+                ETag = response.eTag,
+                Length = response.size,
+                LastModified = response.responseHeaders.ContainsKey("Last-Modified") ? DateTime.Parse(response.responseHeaders["Last-Modified"].FirstOrDefault()) : (DateTime?)null,
                 Name = blobName,
-                Url = GetUrlByKey(response.Key)
+                Url = GetUrlByKey(key)
             };
         }
 
@@ -139,28 +136,29 @@ namespace Magicodes.Storage.Tencent.Core
         /// <returns></returns>
         public async Task<Stream> GetBlobStream(string containerName, string blobName)
         {
-            var request = new GetObjectRequest
-            {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}"
-            };
-            var response = await _amazonS3Client.GetObjectAsync(request);
-            response.HandlerError("下载文件出错!");
-            return response.ResponseStream;
+            var request = new GetObjectBytesRequest(_tcConfig.BucketName, $"{containerName}/{blobName}");
+
+            var response = _cosXmlServer.GetObject(request);
+            
+
+            await response.HandlerError("下载文件出错!");
+            byte[] content = response.content;
+            return new MemoryStream(content);
         }
 
 
 
         public Task<string> GetBlobUrl(string containerName, string blobName)
         {
-            var request = new GetPreSignedUrlRequest
-            {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}",
-                Expires = DateTime.Now
-            };
-            var url = _amazonS3Client.GetPreSignedURL(request);
-            return Task.FromResult(url);
+            //var request = new GetPreSignedUrlRequest
+            //{
+            //    BucketName = _tcConfig.BucketName,
+            //    Key = $"{containerName}/{blobName}",
+            //    Expires = DateTime.Now
+            //};
+            //var url = _amazonS3Client.GetPreSignedURL(request);
+            //return Task.FromResult(url);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -177,16 +175,17 @@ namespace Magicodes.Storage.Tencent.Core
         public Task<string> GetBlobUrl(string containerName, string blobName, DateTime expiry, bool isDownload = false,
             string fileName = null, string contentType = null, BlobUrlAccess access = BlobUrlAccess.Read)
         {
-            var request = new GetPreSignedUrlRequest
-            {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}",
-                Expires = expiry,
-                ContentType = contentType
-            };
+            //var request = new GetPreSignedUrlRequest
+            //{
+            //    BucketName = _tcConfig.BucketName,
+            //    Key = $"{containerName}/{blobName}",
+            //    Expires = expiry,
+            //    ContentType = contentType
+            //};
 
-            var url = _amazonS3Client.GetPreSignedURL(request);
-            return Task.FromResult(url);
+            //var url = _amazonS3Client.GetPreSignedURL(request);
+            //return Task.FromResult(url);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -201,23 +200,20 @@ namespace Magicodes.Storage.Tencent.Core
                 containerName += "/";
             }
 
-            var req = new ListObjectsV2Request
-            {
-                BucketName = _tcConfig.BucketName,
-                Prefix = containerName
-            };
-            var resp = await _amazonS3Client.ListObjectsV2Async(req);
-            resp.HandlerError("获取对象列表出错!");
-            var list = resp.S3Objects
+            var req = new GetBucketRequest(_tcConfig.BucketName);
+            req.SetPrefix(containerName);
+            var resp = _cosXmlServer.GetBucket(req);
+            await resp.HandlerError("获取对象列表出错!");
+            var list = resp.listBucket.contentsList
                 .Select(obj =>
                     new BlobFileInfo
                     {
                         Container = containerName?.Trim('/'),
-                        ETag = obj.ETag,
-                        Length = obj.Size,
-                        LastModified = obj.LastModified,
-                        Name = obj.Key.Replace(containerName, string.Empty),
-                        Url = GetUrlByKey(obj.Key),
+                        ETag = obj.eTag,
+                        Length = obj.size,
+                        LastModified = Convert.ToDateTime(obj.lastModified),
+                        Name = obj.key.Replace(containerName, string.Empty),
+                        Url = GetUrlByKey(obj.key),
                         //ContentMD5 = 
                     });
             return list.ToArray();
@@ -228,7 +224,7 @@ namespace Magicodes.Storage.Tencent.Core
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        private string GetUrlByKey(string key) => $"http://{_tcConfig.BucketName}.cos.{_tcConfig.Region}.myqcloud.com/{key}";
+        private string GetUrlByKey(string key) => $"https://{_tcConfig.BucketName}.cos.{_tcConfig.Region}.myqcloud.com/{key}";
 
         /// <summary>
         ///     保存对象到指定的容器
@@ -238,14 +234,20 @@ namespace Magicodes.Storage.Tencent.Core
         /// <param name="source"></param>
         public async Task SaveBlobStream(string containerName, string blobName, Stream source)
         {
-            var request = new PutObjectRequest
+            byte[] bytes;
+            using (var ms = new MemoryStream())
             {
-                BucketName = _tcConfig.BucketName,
-                Key = $"{containerName}/{blobName}",
-                InputStream = source
+                source.CopyTo(ms);
+                bytes = ms.ToArray();
+            }
+
+            var request = new PutObjectRequest(_tcConfig.BucketName, $"{containerName}/{blobName}", bytes)
+            {
             };
-            var response = await _amazonS3Client.PutObjectAsync(request);
-            response.HandlerError("上传对象出错!");
+
+            var response = _cosXmlServer.PutObject(request);
+
+            await response.HandlerError("上传对象出错!");
         }
 
     }

@@ -19,6 +19,10 @@ using Magicodes.Storage.Tencent.Core;
 using Magicodes.Storage.Tests.Helper;
 using Shouldly;
 using System;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -128,6 +132,29 @@ namespace Magicodes.Storage.Tests
             result.ShouldNotBeNull();
             result.Name.ShouldNotBeNullOrWhiteSpace();
             result.Name.ShouldBe(testFileName);
+
+
+            testFileName = "中文测试.txt";
+            var str = "中文";
+            var array = Encoding.UTF8.GetBytes(str);
+            TestStream = new MemoryStream(array);
+            await StorageProvider.SaveBlobStream(ContainerName, testFileName, TestStream);
+            result = await StorageProvider.GetBlobFileInfo(ContainerName, testFileName);
+            result.ShouldNotBeNull();
+            result.Name.ShouldNotBeNullOrWhiteSpace();
+            result.Name.ShouldBe(testFileName);
+        }
+
+        //private static readonly Encoding ContentDispositionHeaderEncoding = Encoding.GetEncoding("ISO-8859-1");
+        private static readonly Encoding ContentDispositionHeaderEncoding = Encoding.GetEncoding("utf-8");
+
+        public static string GetWebSafeFileName(string fileName)
+        {
+            // We need to convert the file name to ISO-8859-1 due to browser compatibility problems with the Content-Disposition Header (see: https://stackoverflow.com/a/216777/1038611)
+            var webSafeFileName = Encoding.Convert(Encoding.Unicode, ContentDispositionHeaderEncoding, Encoding.Unicode.GetBytes(fileName));
+
+            // Furthermore, any characters not supported by ISO-8859-1 will be replaced by « ? », which is not an acceptable file name character. So we replace these as well.
+            return ContentDispositionHeaderEncoding.GetString(webSafeFileName).Replace('?', '-');
         }
     }
 }

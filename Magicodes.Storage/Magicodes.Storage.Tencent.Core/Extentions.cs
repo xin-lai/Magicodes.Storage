@@ -16,7 +16,8 @@
 // ======================================================================
 
 using System;
-using Amazon.Runtime;
+using System.Threading.Tasks;
+using COSXML.Model;
 using Magicodes.Storage.Core;
 
 namespace Magicodes.Storage.Tencent.Core
@@ -30,17 +31,15 @@ namespace Magicodes.Storage.Tencent.Core
         ///     根据错误类型返回错误异常
         /// </summary>
         /// <returns></returns>
-        public static void HandlerError(this AmazonWebServiceResponse response, string friendlyMessage = null)
+        public static Task HandlerError(this CosResult response, string friendlyMessage = null)
         {
-            var code = (int) response.HttpStatusCode;
-            if (code < 300 || code >= 600) return;
-            var message = response.ResponseMetadata.Metadata["Message"];
-            var requestId = response.ResponseMetadata.Metadata["RequestId"];
-            var traceId = response.ResponseMetadata.Metadata["TraceId"];
-            var resource = response.ResponseMetadata.Metadata["Resource"];
+            var code = (int)response.httpCode;
+            if (code < 300 || code >= 600) return Task.FromResult(0);
+
+            var message = response.httpMessage;
             throw new StorageException(
-                new StorageError {Code = code, Message = friendlyMessage ?? message, ProviderMessage = message},
-                new Exception($"腾讯云存储错误,详细信息:RequestId:{requestId},traceId:{traceId},resource:{resource}"));
+                new StorageError { Code = code, Message = friendlyMessage ?? message, ProviderMessage = message },
+                new Exception($"腾讯云存储错误！"));
         }
     }
 }
