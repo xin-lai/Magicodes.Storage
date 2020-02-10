@@ -141,6 +141,12 @@ namespace Magicodes.Storage.Local.Core
             _rootUrl = rootUrl;
         }
 
+        public LocalStorageProvider(LocalStorageConfig localStorageConfig)
+        {
+            _rootPath = localStorageConfig.RootPath;
+            _rootUrl = localStorageConfig.RootUrl;
+        }
+
         /// <summary>
         /// 删除文件
         /// </summary>
