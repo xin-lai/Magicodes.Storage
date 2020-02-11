@@ -19,6 +19,7 @@ Magicodes.Storage，是心莱科技团队提供的统一存储库，相关库均使用.NET标准库（netst
 | Magicodes.Storage.AliyunOss.Core | [![NuGet](https://buildstats.info/nuget/Magicodes.Storage.AliyunOss.Core)](https://www.nuget.org/packages/Magicodes.Storage.AliyunOss.Core) |阿里云OSS存储实现库 |
 | Magicodes.Storage.Local.Core | [![NuGet](https://buildstats.info/nuget/Magicodes.Storage.Local.Core)](https://www.nuget.org/packages/Magicodes.Storage.Local.Core) |本地存储实现库 |
 | Magicodes.Storage.Tencent.Core | [![NuGet](https://buildstats.info/nuget/Magicodes.Storage.Tencent.Core)](https://www.nuget.org/packages/Magicodes.Storage.Tencent.Core) |腾讯云COS存储实现库 |
+| Magicodes.Storage.Abp.Core | [![NuGet](https://buildstats.info/nuget/Magicodes.Storage.Abp.Core)](https://www.nuget.org/packages/Magicodes.Storage.Abp.Core) |腾讯云COS存储实现库 |
 
 
 ## 相关实践
